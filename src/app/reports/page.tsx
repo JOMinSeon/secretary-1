@@ -30,7 +30,9 @@ import {
     Loader2
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
-import { receiptService, ReceiptData } from "@/lib/supabase/receipt-service";
+import { createReceiptService, type ReceiptData } from "@/lib/supabase/receipt-service";
+import { createClient } from "@/lib/supabase/browser";
+import { generateExcelReport } from "@/lib/actions/report-actions";
 import { motion } from "framer-motion";
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -50,11 +52,15 @@ function ReportsContent() {
     const [data, setData] = useState<ReceiptData[]>([]);
     const [summary, setSummary] = useState({ total: 0, vat: 0, count: 0, deductible: 0 });
     const [categoryData, setCategoryData] = useState<any[]>([]);
+    const [trendData, setTrendData] = useState<any[]>([]);
+
+    const supabase = createClient();
+    const service = createReceiptService(supabase);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await receiptService.getReceipts();
+                const result = await service.getReceipts();
                 setData(result);
 
                 // 집계 로직
@@ -83,6 +89,10 @@ function ReportsContent() {
                 })).sort((a, b) => b.value - a.value);
 
                 setCategoryData(formattedCategories);
+
+                // 3. 월별 트렌드 가져오기
+                const trend = await service.getMonthlyTrend();
+                setTrendData(trend);
             } catch (error) {
                 console.error("Reports Fetch Error:", error);
             } finally {
@@ -92,15 +102,26 @@ function ReportsContent() {
         fetchData();
     }, []);
 
-    const exportToExcel = () => {
-        if (data.length === 0) {
-            alert("내보낼 데이터가 없습니다.");
-            return;
+    const exportToExcel = async () => {
+        try {
+            setIsExporting(true);
+            const base64 = await generateExcelReport();
+
+            // Base64를 Blob으로 변환하여 다운로드
+            const res = await fetch(`data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`);
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `axAI_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Excel Export Error:', error);
+            alert('엑셀 추출 중 오류가 발생했습니다.');
+        } finally {
+            setIsExporting(false);
         }
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Receipts");
-        XLSX.writeFile(workbook, `axAI_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
     };
 
     const exportToPDF = async () => {
@@ -259,14 +280,7 @@ function ReportsContent() {
                     <CardContent className="h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
-                                data={[
-                                    { name: '10월', total: 450000 },
-                                    { name: '11월', total: 680000 },
-                                    { name: '12월', total: 950000 },
-                                    { name: '1월', total: 720000 },
-                                    { name: '2월', total: 1100000 },
-                                    { name: '3월', total: summary.total },
-                                ]}
+                                data={trendData}
                                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

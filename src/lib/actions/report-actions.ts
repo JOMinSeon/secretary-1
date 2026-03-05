@@ -1,15 +1,15 @@
-'use server';
-
+import { createClient } from '@/lib/supabase/server';
+import { createReceiptService } from '../supabase/receipt-service';
 import * as XLSX from 'xlsx';
-import { supabase } from '../supabase/client';
-import { receiptService } from '../supabase/receipt-service';
 
 /**
  * 리포트용 지출 데이터 요약
  */
 export async function getReportSummary(startDate: string, endDate: string) {
     try {
-        return await receiptService.getSummary(startDate, endDate);
+        const supabase = await createClient();
+        const service = createReceiptService(supabase);
+        return await service.getSummary(startDate, endDate);
     } catch (error) {
         console.error('Report Summary Error:', error);
         throw new Error('리포트 요약 데이터를 가져오는데 실패했습니다.');
@@ -22,20 +22,43 @@ export async function getReportSummary(startDate: string, endDate: string) {
  */
 export async function generateExcelReport() {
     try {
-        const receipts = await receiptService.getReceipts();
+        const supabase = await createClient();
+        const service = createReceiptService(supabase);
 
-        // 엑셀에 들어갈 데이터 가공
-        const worksheetData = receipts.map((r) => ({
+        // 1. 세션 확인
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Unauthenticated');
+
+        const receipts = await service.getReceipts();
+
+        // 2. 엑셀에 들어갈 데이터 가공 (한글 헤더 지원)
+        const worksheetData = receipts.map((r: any) => ({
             '상호명': r.merchant_name,
             '결제일시': r.receipt_date,
             '총 결제금액': r.total_amount,
             '부가세액': r.vat_amount,
             '카테고리': r.category,
             '매입세액 공제여부': r.is_deductible ? '대상' : '비공제',
+            '사업자번호': r.business_number || '-',
+            '영수증 이미지': r.image_url || 'N/A'
         }));
 
         // 워크북 생성
         const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+        // 컬럼 너비 설정 (가독성 향상)
+        const wscols = [
+            { wch: 25 }, // 상호명
+            { wch: 20 }, // 결제일시
+            { wch: 15 }, // 총액
+            { wch: 15 }, // 부가세
+            { wch: 15 }, // 카테고리
+            { wch: 15 }, // 공제여부
+            { wch: 20 }, // 사업자번호
+            { wch: 50 }, // 이미지 URL
+        ];
+        worksheet['!cols'] = wscols;
+
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, '영수증 내역');
 

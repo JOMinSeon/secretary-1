@@ -129,5 +129,50 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
             console.warn("Summary fetch failed.", error);
             return { total: 0, vat: 0, count: 0, deductibleCount: 0 };
         }
+    },
+
+    /**
+     * 월별 지출 트렌드 조회 (최근 6개월)
+     */
+    async getMonthlyTrend() {
+        try {
+            const now = new Date();
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+            const { data, error } = await supabase
+                .from('receipts')
+                .select('total_amount, receipt_date')
+                .gte('receipt_date', sixMonthsAgo.toISOString())
+                .order('receipt_date', { ascending: true });
+
+            if (error) throw error;
+
+            // 월별 그룹화
+            const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+            const trendMap: Record<string, number> = {};
+
+            // 최근 6개월 초기화
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const label = `${d.getMonth() + 1}월`;
+                trendMap[label] = 0;
+            }
+
+            data?.forEach(r => {
+                const d = new Date(r.receipt_date);
+                const label = `${d.getMonth() + 1}월`;
+                if (trendMap[label] !== undefined) {
+                    trendMap[label] += Number(r.total_amount);
+                }
+            });
+
+            return Object.keys(trendMap).map(name => ({
+                name,
+                total: trendMap[name]
+            }));
+        } catch (error) {
+            console.error("Trend Fetch Error:", error);
+            return [];
+        }
     }
 });
