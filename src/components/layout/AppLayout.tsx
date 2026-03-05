@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { usePathname } from 'next/navigation';
 import { SubscriptionSync } from "./SubscriptionSync";
+import { TaxAssistantChat } from "../chat/TaxAssistantChat";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -35,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </main>
             </div>
+            <TaxAssistantChat />
         </SidebarProvider>
     );
 }
