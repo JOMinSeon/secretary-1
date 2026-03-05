@@ -1,0 +1,139 @@
+﻿node.exe : Retrieving project??De
+ploying fjkg33s-projects/secretar
+y
+위치 줄:1 문자:1
++ & "C:\Program Files\nodejs/node
+.exe" "C:\Program Files\nodejs/no
+de_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          : No 
+   tSpecified: (Retrieving proj  
+  ...jects/secretary:String) [   
+ ], RemoteException
+    + FullyQualifiedErrorId : Na 
+   tiveCommandError
+ 
+Uploading [--------------------] 
+(0.0B/280B)
+Uploading [====================] 
+(280.0B/280B)
+Inspect: https://vercel.com/fjkg3
+3s-projects/secretary/c5Kskgfe7f2
+kj3z6yJiSxSw7qCKm [2s]
+Production: https://secretary-6lu
+8cttfh-fjkg33s-projects.vercel.ap
+p [2s]
+Building...
+Building...
+Building: Running build in Washin
+gton, D.C., USA (East) ??iad1
+Building: Build machine configura
+tion: 2 cores, 8 GB
+Building: Retrieving list of depl
+oyment files...
+Building: Previous build caches n
+ot available.
+Building: Downloading 69 deployme
+nt files...
+Building: Running "vercel build"
+Building: Installing dependencies
+...
+Building: npm warn deprecated nod
+e-domexception@1.0.0: Use your pl
+atform's native DOMException inst
+ead
+Building: added 791 packages in 1
+9s
+Building: 241 packages are lookin
+g for funding
+Building: run `npm fund` for deta
+ils
+Building: Detected Next.js versio
+n: 16.1.6
+Building: Running "npm run build"
+Building: > secretary@0.1.0 build
+Building: > next build
+Building: Attention: Next.js now 
+collects completely anonymous tel
+emetry regarding usage.
+Building: This information is use
+d to shape Next.js' roadmap and p
+rioritize features.
+Building: You can learn more, inc
+luding how to opt-out if you'd no
+t like to participate in this ano
+nymous program, by visiting the f
+ollowing URL:
+Building: https://nextjs.org/tele
+metry
+Building: ??Next.js 16.1.6 (Turbo
+pack)
+Building: Creating an optimized p
+roduction build ...
+Building: ??Compiled successfully
+ in 25.3s
+Building: Running TypeScript ...
+Building: Collecting page data us
+ing 1 worker ...
+Building: Generating static pages
+ using 1 worker (0/14) ...
+Building: Generating static pages
+ using 1 worker (3/14)
+Building: Generating static pages
+ using 1 worker (6/14)
+Building: The width(-1) and heigh
+t(-1) of chart should be greater 
+than 0,
+Building: please check the style 
+of container, or the props width(
+100%) and height(100%),
+Building: or add a minWidth(0) or
+ minHeight(undefined) or use aspe
+ct(undefined) to control the
+Building: height and width.
+Building: Generating static pages
+ using 1 worker (10/14)
+Building: ??Generating static pag
+es using 1 worker (14/14) in 543.
+1ms
+Building: Finalizing page optimiz
+ation ...
+Building: Route (app)
+Building: ????/
+Building: ????/_not-found
+Building: ??? /api/gemini
+Building: ??? /api/test-gemini
+Building: ??? /api/webhook/stripe
+Building: ????/checkout
+Building: ????/checkout/success
+Building: ????/pricing
+Building: ????/receipts
+Building: ????/reports
+Building: ????/settings
+Building: ????/test-ai
+Building: ? Proxy (Middleware)
+Building: ?? (Static)   prerender
+ed as static content
+Building: ?  (Dynamic)  server-re
+ndered on demand
+Building: Traced Next.js server f
+iles in: 33.889ms
+Building: Created all serverless 
+functions in: 191.618ms
+Building: Collected static files 
+(public/, static/, .next/static):
+ 4.593ms
+Building: Build Completed in /ver
+cel/output [56s]
+Building: Deploying outputs...
+Building: Deployment completed
+Building: Creating build cache...
+[2K[1A[2K[GProduction: https:
+//secretary-6lu8cttfh-fjkg33s-pro
+jects.vercel.app [1m]
+Completing...
+Aliased: https://secretary-three.
+vercel.app [1m]
+https://secretary-6lu8cttfh-fjkg33s-projects.vercel.app
