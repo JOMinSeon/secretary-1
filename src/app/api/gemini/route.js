@@ -3,9 +3,21 @@
 // 1. 필요한 패키지 불러오기 (설치가 안 되어 있다면 npm install @google/generative-ai 실행)
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request) {
     try {
+        // 1. 세션 확인 및 인증된 사용자인지 검증 (보안 강화)
+        const supabase = await createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            return NextResponse.json(
+                { error: "인증되지 않은 사용자입니다." },
+                { status: 401 }
+            );
+        }
+
         // 2. 클라이언트(프론트엔드)에서 보낸 질문 데이터 받기
         const body = await request.json();
         const { prompt } = body;

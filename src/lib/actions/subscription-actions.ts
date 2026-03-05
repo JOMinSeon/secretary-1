@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { PlanType } from '@/store/usePlanStore';
+import { stripe } from '@/lib/stripe';
 
-export async function upgradeSubscription(planName: PlanType) {
+export async function upgradeSubscription(planName: PlanType, sessionId: string) {
     try {
         const supabase = await createClient();
 
@@ -11,6 +12,16 @@ export async function upgradeSubscription(planName: PlanType) {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
             throw new Error('User not authenticated');
+        }
+
+        // 1-1. Stripe 결제 세션 검증 (보안 대책)
+        const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+        if (stripeSession.payment_status !== 'paid') {
+            throw new Error('Payment verification failed.');
+        }
+
+        if (stripeSession.metadata?.plan !== planName) {
+            throw new Error('Plan tier mismatch.');
         }
 
         // 2. 사용자의 조직 ID 가져오기

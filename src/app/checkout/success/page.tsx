@@ -19,8 +19,8 @@ function SuccessContent() {
     useEffect(() => {
         const handleSuccess = async () => {
             if (sessionId && plan) {
-                // 1. 서버 액션을 호출하여 데이터베이스 고도화 시도
-                const result = await upgradeSubscription(plan);
+                // 1. 서버 액션을 호출하여 데이터베이스 고도화 시도 (Session ID 전달)
+                const result = await upgradeSubscription(plan, sessionId);
 
                 if (result.success) {
                     // 2. 클라이언트 상태 업데이트 (Local Store)
