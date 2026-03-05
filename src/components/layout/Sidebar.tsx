@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
     Receipt,
@@ -8,7 +10,6 @@ import {
     Settings,
     Zap,
     Lock,
-    Menu,
 } from "lucide-react";
 import {
     Sidebar,
@@ -18,8 +19,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarProvider,
-    SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +33,7 @@ const navItems = [
 
 export function AppSidebar() {
     const { plan, usageCount, maxLimit, usagePercentage, isPremium } = useSubscription();
+    const pathname = usePathname();
 
     return (
         <Sidebar variant="floating" collapsible="icon">
@@ -51,15 +51,18 @@ export function AppSidebar() {
                     {navItems.map((item) => (
                         <SidebarMenuItem key={item.label}>
                             <SidebarMenuButton
+                                asChild
                                 tooltip={item.label}
-                                className="flex items-center gap-3 py-6"
-                                disabled={item.premium && !isPremium}
+                                className={`flex items-center gap-3 py-6 ${pathname === item.href ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}
+                                isActive={pathname === item.href}
                             >
-                                <item.icon className="w-5 h-5" />
-                                <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                                {item.premium && !isPremium && (
-                                    <Lock className="w-3 h-3 ml-auto opacity-50 group-data-[collapsible=icon]:hidden" />
-                                )}
+                                <Link href={item.href}>
+                                    <item.icon className="w-5 h-5" />
+                                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                                    {item.premium && !isPremium && (
+                                        <Lock className="w-3 h-3 ml-auto opacity-50 group-data-[collapsible=icon]:hidden" />
+                                    )}
+                                </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ))}
