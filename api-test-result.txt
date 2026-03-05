@@ -1,6 +1,0 @@
-API CONNECTION TEST REPORT
-==========================
-
-[STRIPE]: SUCCESS (Object: balance)
-[SUPABASE]: SUCCESS (Plans Count: 3)
-[GEMINI]: API KEY PRESENT

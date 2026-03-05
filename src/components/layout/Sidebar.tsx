@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 const navItems = [
-    { icon: LayoutDashboard, label: "대시보드", href: "/", premium: false },
+    { icon: LayoutDashboard, label: "대시보드", href: "/dashboard", premium: false },
     { icon: Receipt, label: "영수증 관리", href: "/receipts", premium: false },
     { icon: BarChart3, label: "리포트", href: "/reports", premium: true },
     { icon: Settings, label: "설정", href: "/settings", premium: false },
