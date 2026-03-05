@@ -49,8 +49,10 @@ export async function createCheckoutSession(plan: PlanType, userId?: string) {
         });
 
         return { sessionId: session.id, url: session.url };
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '결제 처리 중 오류가 발생했습니다.';
         console.error('Stripe Checkout Error:', error);
-        throw new Error(error.message);
+        throw new Error(message);
+    }
     }
 }

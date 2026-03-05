@@ -11,7 +11,7 @@ export interface ReceiptData {
     category: string;
     is_deductible: boolean;
     image_url?: string;
-    items?: any;
+    items?: Record<string, unknown>;
     business_number?: string;
 }
 

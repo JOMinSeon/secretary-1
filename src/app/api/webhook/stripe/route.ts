@@ -15,15 +15,15 @@ export async function POST(req: Request) {
             signature,
             process.env.STRIPE_WEBHOOK_SECRET!
         );
-    } catch (err: any) {
-        console.error(`Webhook Error: ${err.message}`);
-        return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : 'Webhook verification failed';
+        console.error(`Webhook Error: ${message}`);
+        return new NextResponse(`Webhook Error: ${message}`, { status: 400 });
     }
-
-    const session = event.data.object as Stripe.Checkout.Session;
 
     // 1. 체크아웃 세션 완료 (결제 성공 시점)
     if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
         const plan = session.metadata?.plan;
 

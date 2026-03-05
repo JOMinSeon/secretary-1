@@ -31,7 +31,7 @@ export async function getBusinessProfile() {
             return null;
         }
 
-        const org = memberData.organizations as any;
+        const org = memberData.organizations as { name?: string; business_number?: string; representative_name?: string; address?: string; phone?: string };
         return {
             businessName: org.name || '',
             businessNumber: org.business_number || '',
@@ -76,8 +76,9 @@ export async function updateBusinessProfile(data: BusinessProfile) {
 
         if (error) throw error;
         return { success: true };
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error('updateBusinessProfile Error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: message };
     }
 }

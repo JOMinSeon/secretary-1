@@ -24,7 +24,7 @@ export function ReceiptUpload() {
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [status, setStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
-    const [result, setResult] = useState<any>(null);
+    const [result, setResult] = useState<{ merchant_name?: string; total_amount?: number; receipt_date?: string; category?: string; is_deductible?: boolean } | null>(null);
     const [errorMsg, setErrorMsg] = useState<string>("");
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,9 +94,10 @@ export function ReceiptUpload() {
             setResult(savedData);
             incrementUsage();
             setStatus("success");
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : '알 수 없는 오류';
             console.error("Upload/Process flow error:", error);
-            setErrorMsg(error.message || "처리 중 오류가 발생했습니다.");
+            setErrorMsg(message || "처리 중 오류가 발생했습니다.");
             setStatus("error");
         }
     };

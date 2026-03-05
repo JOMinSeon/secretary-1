@@ -31,7 +31,7 @@ const DATA_BY_PERIOD = {
     ],
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-100 flex flex-col gap-1 items-start">
@@ -62,7 +62,7 @@ export function PurchaseTrendChart() {
                         <CardTitle>지출 트렌드</CardTitle>
                         <CardDescription>월별 총 매입 내역 분석</CardDescription>
                     </div>
-                    <Tabs defaultValue="6months" onValueChange={(v) => setPeriod(v as any)}>
+                    <Tabs defaultValue="6months" onValueChange={(v) => setPeriod(v as '6months' | '3months')}>
                         <TabsList className="bg-slate-100/50 p-1 h-9 rounded-lg">
                             <TabsTrigger value="6months" className="text-xs rounded-md">6개월</TabsTrigger>
                             <TabsTrigger value="3months" className="text-xs rounded-md">3개월</TabsTrigger>

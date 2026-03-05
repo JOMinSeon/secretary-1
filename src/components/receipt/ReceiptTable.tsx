@@ -428,7 +428,7 @@ export function ReceiptTable() {
                                 <Input
                                     id="date"
                                     type="datetime-local"
-                                    value={selectedReceipt.receipt_date.substring(0, 16)}
+                                    value={selectedReceipt.receipt_date?.substring(0, 16) || ''}
                                     onChange={(e) => setSelectedReceipt({ ...selectedReceipt, receipt_date: e.target.value })}
                                     className="rounded-xl h-12 bg-slate-50 border-none"
                                 />

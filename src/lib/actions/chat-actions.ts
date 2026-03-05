@@ -68,8 +68,9 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
         const response = await result.response;
         return response.text();
 
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error("Chat Action Error:", error);
-        throw new Error(error.message || "AI 비서와 연결하는 중 오류가 발생했습니다.");
+        throw new Error(message || "AI 비서와 연결하는 중 오류가 발생했습니다.");
     }
 }

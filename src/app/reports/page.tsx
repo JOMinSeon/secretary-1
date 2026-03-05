@@ -21,10 +21,8 @@ import {
     FileText,
     TrendingUp,
     Calculator,
-    Calendar,
     Download,
     Lock,
-    ArrowRight,
     ChevronRight,
     AlertCircle,
     Loader2
@@ -38,11 +36,53 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-// @ts-ignore
 import * as XLSX from 'xlsx';
 import { getBusinessProfile, type BusinessProfile } from "@/lib/actions/profile-actions";
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
+
+type PeriodType = 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'all';
+
+const getPeriodLabel = (period: PeriodType): string => {
+    switch (period) {
+        case 'thisMonth': return '이번 달';
+        case 'lastMonth': return '지난 달';
+        case 'thisQuarter': return '이번 분기';
+        case 'thisYear': return '올해';
+        case 'all': return '전체';
+    }
+};
+
+const getDateRange = (period: PeriodType): { start: Date; end: Date } => {
+    const now = new Date();
+    const start = new Date();
+    const end = new Date();
+    
+    switch (period) {
+        case 'thisMonth':
+            start.setDate(1);
+            break;
+        case 'lastMonth':
+            start.setMonth(now.getMonth() - 1, 1);
+            end.setDate(0);
+            break;
+        case 'thisQuarter':
+            const quarter = Math.floor(now.getMonth() / 3);
+            start.setMonth(quarter * 3, 1);
+            end.setMonth(quarter * 3 + 3, 0);
+            break;
+        case 'thisYear':
+            start.setMonth(0, 1);
+            end.setMonth(11, 31);
+            break;
+        case 'all':
+            start.setFullYear(2020, 0, 1);
+            end.setFullYear(2100, 11, 31);
+            break;
+    }
+    
+    return { start, end };
+};
 
 function ReportsContent() {
     const { isPremium } = useSubscription();
@@ -51,10 +91,11 @@ function ReportsContent() {
 
     const [loading, setLoading] = useState(true);
     const [isExporting, setIsExporting] = useState(false);
+    const [period, setPeriod] = useState<PeriodType>('thisMonth');
     const [data, setData] = useState<ReceiptData[]>([]);
-    const [summary, setSummary] = useState({ total: 0, vat: 0, count: 0, deductible: 0 });
-    const [categoryData, setCategoryData] = useState<any[]>([]);
-    const [trendData, setTrendData] = useState<any[]>([]);
+    const [summary, setSummary] = useState({ total: 0, vat: 0, count: 0, deductible: 0, nonDeductible: 0 });
+    const [categoryData, setCategoryData] = useState<{ name: string; value: number }[]>([]);
+    const [trendData, setTrendData] = useState<{ name: string; total: number }[]>([]);
     const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
     const supabase = createClient();
@@ -63,31 +104,33 @@ function ReportsContent() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 사업자 정보 가져오기
                 const p = await getBusinessProfile();
                 setProfile(p);
 
                 const result = await service.getReceipts();
                 setData(result);
+                
+                const { start, end } = getDateRange(period);
+                const filtered = result.filter(r => {
+                    const date = new Date(r.receipt_date);
+                    return date >= start && date <= end;
+                });
 
-                // 집계 로직
-                const stats = result.reduce((acc, curr) => {
+                const stats = filtered.reduce((acc, curr) => {
                     acc.total += Number(curr.total_amount);
                     acc.vat += Number(curr.vat_amount);
                     if (curr.is_deductible) acc.deductible += 1;
-
-                    // 카테고리별 집계
                     const cat = curr.category || '기타';
                     acc.categories[cat] = (acc.categories[cat] || 0) + Number(curr.total_amount);
-
                     return acc;
-                }, { total: 0, vat: 0, deductible: 0, categories: {} as any });
+                }, { total: 0, vat: 0, deductible: 0, categories: {} as Record<string, number> });
 
                 setSummary({
                     total: stats.total,
                     vat: stats.vat,
-                    count: result.length,
-                    deductible: stats.deductible
+                    count: filtered.length,
+                    deductible: stats.deductible,
+                    nonDeductible: filtered.length - stats.deductible
                 });
 
                 const formattedCategories = Object.keys(stats.categories).map(name => ({
@@ -97,7 +140,6 @@ function ReportsContent() {
 
                 setCategoryData(formattedCategories);
 
-                // 3. 월별 트렌드 가져오기
                 const trend = await service.getMonthlyTrend();
                 setTrendData(trend);
             } catch (error) {
@@ -107,14 +149,12 @@ function ReportsContent() {
             }
         };
         fetchData();
-    }, []);
+    }, [period]);
 
     const exportToExcel = async () => {
         try {
             setIsExporting(true);
             const base64 = await generateExcelReport();
-
-            // Base64를 Blob으로 변환하여 다운로드
             const res = await fetch(`data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`);
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
@@ -226,9 +266,24 @@ function ReportsContent() {
             )}
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="no-print">
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">지출 리포트</h2>
-                    <p className="text-slate-500 mt-1">데이터 분석을 통해 세금 절감 포인트를 찾아보세요.</p>
+                <div className="no-print space-y-3">
+                    <div>
+                        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">지출 리포트</h2>
+                        <p className="text-slate-500 mt-1">데이터 분석을 통해 세금 절감 포인트를 찾아보세요.</p>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        {(['thisMonth', 'lastMonth', 'thisQuarter', 'thisYear', 'all'] as PeriodType[]).map((p) => (
+                            <Button
+                                key={p}
+                                variant={period === p ? "default" : "outline"}
+                                onClick={() => setPeriod(p)}
+                                size="sm"
+                                className={`rounded-lg ${period === p ? 'bg-indigo-600 hover:bg-indigo-700' : 'border-slate-200 text-slate-600'}`}
+                            >
+                                {getPeriodLabel(p)}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
                 <div className="flex gap-2 no-print">
                     <Button
@@ -254,13 +309,12 @@ function ReportsContent() {
                 </div>
             </div>
 
-            {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { title: "총 지출액", value: `₩${summary.total.toLocaleString()}`, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", desc: "분석된 영수증 합계" },
+                    { title: "총 지출액", value: `₩${summary.total.toLocaleString()}`, icon: FileText, color: "text-blue-600", bg: "bg-blue-50", desc: `${getPeriodLabel(period)} 합계` },
                     { title: "환급액 (예상)", value: `₩${summary.vat.toLocaleString()}`, icon: Calculator, color: "text-emerald-600", bg: "bg-emerald-50", desc: "부가세 매입세액 공제" },
                     { title: "공제 가능 건수", value: `${summary.deductible}건`, icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-50", desc: "사업 관련 지출 항목" },
-                    { title: "분석 영수증", value: `${summary.count}장`, icon: AlertCircle, color: "text-indigo-600", bg: "bg-indigo-50", desc: "이번 달 처리 완료" },
+                    { title: "분석 영수증", value: `${summary.count}장`, icon: AlertCircle, color: "text-indigo-600", bg: "bg-indigo-50", desc: "처리 완료" },
                 ].map((card, i) => (
                     <Card key={i} className="border-none shadow-sm overflow-hidden">
                         <CardContent className="p-6">
@@ -268,7 +322,7 @@ function ReportsContent() {
                                 <div className={`${card.bg} ${card.color} p-2.5 rounded-xl`}>
                                     <card.icon size={22} />
                                 </div>
-                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-medium">Monthly</Badge>
+                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-medium">{getPeriodLabel(period)}</Badge>
                             </div>
                             <div className="text-2xl font-black text-slate-900 mb-1">{card.value}</div>
                             <p className="text-xs text-slate-400 font-medium">{card.desc}</p>
@@ -278,7 +332,6 @@ function ReportsContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Category Distribution */}
                 <Card className="border-none shadow-sm">
                     <CardHeader>
                         <CardTitle>카테고리별 분포</CardTitle>
@@ -301,7 +354,7 @@ function ReportsContent() {
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value: any) => [`₩${Number(value).toLocaleString()}`, '지출액']}
+                                    formatter={(value) => [`₩${Number(value ?? 0).toLocaleString()}`, '지출액']}
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Legend layout="vertical" align="right" verticalAlign="middle" iconType="circle" />
@@ -310,7 +363,6 @@ function ReportsContent() {
                     </CardContent>
                 </Card>
 
-                {/* Monthly Comparison */}
                 <Card className="border-none shadow-sm">
                     <CardHeader>
                         <CardTitle>월별 지출 비교</CardTitle>
@@ -327,7 +379,7 @@ function ReportsContent() {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `${v / 10000}만`} />
                                 <Tooltip
                                     cursor={{ fill: '#f8fafc' }}
-                                    formatter={(value: any) => [`₩${Number(value).toLocaleString()}`, '지출액']}
+                                    formatter={(value) => [`₩${Number(value ?? 0).toLocaleString()}`, '지출액']}
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Bar dataKey="total" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={32} />
@@ -337,18 +389,24 @@ function ReportsContent() {
                 </Card>
             </div>
 
-            {/* Tax Saving Tips */}
             <Card className="bg-indigo-600 border-none shadow-xl shadow-indigo-100 overflow-hidden relative">
                 <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
                 <CardContent className="p-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="space-y-4">
                         <h3 className="text-2xl font-bold text-white leading-tight">
-                            이번 달 약 <span className="text-emerald-300">₩{(summary.total * 0.03).toLocaleString()}</span>의 <br />
-                            세금을 추가로 절약할 수 있을 것 같아요!
+                            {getPeriodLabel(period)} 매입세액 <span className="text-emerald-300">₩{summary.vat.toLocaleString()}</span>을<br />
+                            공제 받으실 수 있어요!
                         </h3>
                         <p className="text-white/80 text-sm max-w-xl">
-                            axAI 기술로 분석한 결과, 아직 공제 대상으로 분류되지 않은 5개의 영수증이 발견되었습니다.
-                            증빙 자료를 보강하여 환급액을 극대화해보세요.
+                            {summary.nonDeductible > 0 && (
+                                <>
+                                    분석 결과, 아직 공제 대상으로 분류되지 않은 <span className="font-bold text-emerald-200">{summary.nonDeductible}개</span>의 영수증이 발견되었습니다.
+                                    {(summary.total - summary.vat) * 0.1 > 0 && (
+                                        <> 추가 공제로 약 <span className="font-bold text-emerald-200">₩{Math.round((summary.total - summary.vat) * 0.1 / summary.count * summary.nonDeductible).toLocaleString()}</span>의 세금을 절약할 수 있습니다.</>
+                                    )}
+                                </>
+                            )}
+                            {summary.nonDeductible === 0 && "모든 영수증이 공제 대상으로 분류되어 있습니다."}
                         </p>
                     </div>
                     <Button className="bg-white text-indigo-600 hover:bg-slate-100 rounded-2xl h-14 px-8 font-bold text-lg whitespace-nowrap shadow-xl">

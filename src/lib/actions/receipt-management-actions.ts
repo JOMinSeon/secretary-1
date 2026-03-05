@@ -19,9 +19,10 @@ export async function updateReceiptAction(id: string, updates: Partial<ReceiptDa
         revalidatePath('/reports');
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error('Update Receipt Error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: message };
     }
 }
 
@@ -40,8 +41,9 @@ export async function deleteReceiptAction(id: string) {
         revalidatePath('/reports');
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error('Delete Receipt Error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: message };
     }
 }

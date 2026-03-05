@@ -42,28 +42,6 @@ export default function ReceiptsPage() {
                 </TabsContent>
 
                 <TabsContent value="history" className="space-y-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-indigo-50/50 p-6 rounded-xl border border-indigo-100 mb-6">
-                        <div>
-                            <h3 className="font-bold text-indigo-900 text-lg flex items-center gap-2">
-                                Supabase 연동 안내
-                            </h3>
-                            <p className="text-sm text-indigo-700 mt-1 max-w-2xl leading-relaxed">
-                                현재 데모 데이터가 렌더링되고 있습니다. 실제 DB 연동을 위해서는 프로젝트 루트의
-                                <strong className="mx-1 bg-white px-2 py-0.5 rounded shadow-sm text-xs">supabase.sql</strong>
-                                를 실행하고 <code>.env.local</code>에 키를 추가하세요.
-                            </p>
-                        </div>
-                        <Button size="sm" variant="outline" className="bg-white hover:bg-slate-50 border-indigo-200 text-indigo-600 shrink-0"
-                            onClick={() => {
-                                const sql = "CREATE TABLE IF NOT EXISTS public.receipts (...);";
-                                navigator.clipboard.writeText(sql);
-                            }}
-                        >
-                            <CopyIcon className="w-4 h-4 mr-2" />
-                            SQL 구조 확인
-                        </Button>
-                    </div>
-
                     {/* TanStack Table Rendering */}
                     <ReceiptTable />
                 </TabsContent>

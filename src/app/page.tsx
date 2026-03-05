@@ -39,7 +39,7 @@ export default function TaxAILandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
-              "어제 쓴 영수증, 어디 있더라?"<br className="md:hidden" /> 매번 찾는 것도 일입니다.
+              &quot;어제 쓴 영수증, 어디 있더라?&quot;<br className="md:hidden" /> 매번 찾는 것도 일입니다.
             </h2>
             <div className="w-20 h-1.5 bg-blue-600 mx-auto rounded-full" />
           </div>
@@ -147,7 +147,7 @@ export default function TaxAILandingPage() {
         <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 via-transparent to-transparent" />
         <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-10 text-white leading-tight">
-            "오늘 가입하면 이번 분기 부가세 신고는 <span className="text-blue-400">0원!</span>"
+            &quot;오늘 가입하면 이번 분기 부가세 신고는 <span className="text-blue-400">0원!</span>&quot;
           </h2>
           <p className="text-slate-400 text-xl mb-12">선착순 100분께만 드리는 한정 혜택을 놓치지 마세요.</p>
           <Link href="/dashboard">

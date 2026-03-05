@@ -8,7 +8,7 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function TestAIPage() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-    const [result, setResult] = useState<any>(null);
+    const [result, setResult] = useState<{ success: boolean; result?: string; model?: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const runTest = async () => {
@@ -31,8 +31,10 @@ export default function TestAIPage() {
 
             setResult(data);
             setStatus("success");
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : '알 수 없는 오류';
+            setError(message);
+            setError(e instanceof Error ? e.message : '알 수 없는 오류');
             setStatus("error");
         }
     };

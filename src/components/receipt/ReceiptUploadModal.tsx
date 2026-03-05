@@ -88,9 +88,10 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
                 if (onSuccess) onSuccess();
             }, 2000);
 
-        } catch (err: any) {
+        } catch (err) {
+            const message = err instanceof Error ? err.message : '알 수 없는 오류';
             console.error(err);
-            setError(err.message || '영수증 분석 중 오류가 발생했습니다.');
+            setError(message || '영수증 분석 중 오류가 발생했습니다.');
             setStatus('error');
         } finally {
             setIsAnalyzing(false);

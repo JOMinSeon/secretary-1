@@ -22,10 +22,11 @@ export async function GET() {
             result: response.text(),
             model: "gemini-2.0-flash"
         });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         return NextResponse.json({
-            error: error.message,
-            suggestion: "Check your Gemini API key in Google AI Studio",
+            error: message,
+            suggestion: "Check your Gemini API key in Google AI Studio"
         }, { status: 500 });
     }
 }

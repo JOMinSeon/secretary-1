@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createReceiptService } from '../supabase/receipt-service';
-// @ts-ignore
 import * as XLSX from 'xlsx';
 import { getBusinessProfile } from './profile-actions';
 
@@ -47,7 +46,7 @@ export async function generateExcelReport() {
             [] // 빈 줄
         ];
 
-        const worksheetData = receipts.map((r: any) => ({
+        const worksheetData = receipts.map((r) => ({
             '상호명': r.merchant_name,
             '결제일시': r.receipt_date,
             '총 결제금액': r.total_amount,
@@ -57,6 +56,7 @@ export async function generateExcelReport() {
             '사업자번호': r.business_number || '-',
             '영수증 이미지': r.image_url || 'N/A'
         }));
+
 
         // 워크북 생성 (헤더 정보 먼저 추가 후 데이터 추가)
         const worksheet = XLSX.utils.aoa_to_sheet(headerInfo);

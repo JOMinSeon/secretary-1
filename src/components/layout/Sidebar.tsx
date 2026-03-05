@@ -51,7 +51,7 @@ const navItems = [
 export function AppSidebar() {
     const { plan, usageCount, maxLimit, usagePercentage, isPremium } = useSubscription();
     const pathname = usePathname();
-    const [user, setUser] = React.useState<any>(null);
+    const [user, setUser] = React.useState<{ email?: string; user_metadata?: { avatar_url?: string } } | null>(null);
     const supabase = createClient();
     const router = useRouter();
 

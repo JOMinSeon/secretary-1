@@ -66,9 +66,10 @@ export async function upgradeSubscription(planName: PlanType) {
         }
 
         return { success: true };
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error('Upgrade Error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: message };
     }
 }
 
@@ -109,14 +110,14 @@ export async function getCurrentSubscription() {
             .eq('status', 'ACTIVE')
             .single();
 
-        const planName = (subData as any)?.plans?.name as PlanType || 'FREE';
+        const planName = (subData as { plans?: { name?: string } })?.plans?.name as PlanType || 'FREE';
 
         return {
             plan: planName,
             usageCount: creditData?.used_count || 0,
             maxLimit: creditData?.subscription_limit || 10
         };
-    } catch (error: any) {
+    } catch (error) {
         console.error('Fetch Subscription Error:', error);
         return { plan: 'FREE' as PlanType, usageCount: 0, maxLimit: 10 };
     }

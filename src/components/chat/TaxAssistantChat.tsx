@@ -57,10 +57,11 @@ export function TaxAssistantChat() {
             const response = await askTaxAssistant(userMessage, history);
 
             setMessages(prev => [...prev, { role: 'model', content: response }]);
-        } catch (error: any) {
+        } catch (e) {
+            const message = e instanceof Error ? e.message : '알 수 없는 오류';
             setMessages(prev => [...prev, {
                 role: 'model',
-                content: '죄송합니다. 오류가 발생했습니다: ' + error.message
+                content: '죄송합니다. 오류가 발생했습니다: ' + message
             }]);
         } finally {
             setIsLoading(false);
