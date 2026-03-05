@@ -25,7 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, Lock, Search, Download, Loader2 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
-import { receiptService, ReceiptData } from "@/lib/supabase/receipt-service";
+import { createReceiptService, type ReceiptData } from "@/lib/supabase/receipt-service";
+import { createClient } from "@/lib/supabase/browser";
 import { generateExcelReport } from "@/lib/actions/report-actions";
 
 export const columns: ColumnDef<ReceiptData>[] = [
@@ -80,12 +81,14 @@ export function ReceiptTable() {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const { isPremium } = useSubscription();
+    const supabase = createClient();
+    const service = createReceiptService(supabase);
 
     // 데이터 페칭
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await receiptService.getReceipts();
+                const result = await service.getReceipts();
                 setData(result);
             } catch (error) {
                 console.error("Fetch Data Error:", error);

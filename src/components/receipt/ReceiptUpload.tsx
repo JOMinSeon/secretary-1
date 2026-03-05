@@ -17,6 +17,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { usePlanStore } from "@/store/usePlanStore";
 import { analyzeReceipt } from "@/lib/actions/receipt-actions";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/browser";
+import { createReceiptService } from "@/lib/supabase/receipt-service";
 
 export function ReceiptUpload() {
     const [file, setFile] = useState<File | null>(null);
@@ -28,6 +30,8 @@ export function ReceiptUpload() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { usageCount, maxLimit, hasReachedLimit } = useSubscription();
     const incrementUsage = usePlanStore((state) => state.incrementUsage);
+    const supabase = createClient();
+    const service = createReceiptService(supabase);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -60,18 +64,39 @@ export function ReceiptUpload() {
         if (!preview || !file) return;
 
         try {
+            setStatus("uploading");
+
+            // 0. Get User
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setErrorMsg("로그인이 필요합니다.");
+                setStatus("error");
+                return;
+            }
+
+            // 1. Upload to Storage
+            const publicUrl = await service.uploadImage(file, user.id);
+
             setStatus("analyzing");
 
-            // 1. Call AI Analysis
-            const data = await analyzeReceipt(preview, file.name);
+            // 2. Call AI Analysis
+            const aiData = await analyzeReceipt(preview, file.name);
 
-            // 2. Mock state update (Success)
-            setResult(data);
+            // 3. Save to Database
+            const savedData = await service.saveReceipt({
+                ...aiData,
+                user_id: user.id,
+                image_url: publicUrl,
+                items: aiData.items || []
+            });
+
+            // 4. Update UI
+            setResult(savedData);
             incrementUsage();
             setStatus("success");
         } catch (error: any) {
-            console.error(error);
-            setErrorMsg(error.message || "분석 실패");
+            console.error("Upload/Process flow error:", error);
+            setErrorMsg(error.message || "처리 중 오류가 발생했습니다.");
             setStatus("error");
         }
     };

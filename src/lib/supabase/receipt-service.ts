@@ -1,7 +1,8 @@
-import { supabase } from './client';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface ReceiptData {
     id?: string;
+    org_id?: string;
     user_id?: string;
     merchant_name: string;
     receipt_date: string;
@@ -11,6 +12,7 @@ export interface ReceiptData {
     is_deductible: boolean;
     image_url?: string;
     items?: any;
+    business_number?: string;
 }
 
 const mockReceipts: ReceiptData[] = [
@@ -23,7 +25,7 @@ const mockReceipts: ReceiptData[] = [
     { id: "7", merchant_name: "김밥천국", receipt_date: "2024-02-28 12:30:00", total_amount: 8000, vat_amount: 727, category: "Food", is_deductible: false },
 ];
 
-export const receiptService = {
+export const createReceiptService = (supabase: SupabaseClient) => ({
     /**
      * 영수증 목록 조회
      */
@@ -38,7 +40,6 @@ export const receiptService = {
             return data as ReceiptData[];
         } catch (error) {
             console.warn("Supabase fetch failed, falling back to mock data.", error);
-            // Return mock data for UI testing if DB is not configured
             return mockReceipts;
         }
     },
@@ -47,21 +48,60 @@ export const receiptService = {
      * 영수증 데이터 저장
      */
     async saveReceipt(receipt: ReceiptData) {
-        try {
-            const { data, error } = await supabase
-                .from('receipts')
-                .insert([receipt])
-                .select();
+        // user_id가 없으면 현재 세션에서 가져오기 시도
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            receipt.user_id = user.id;
 
-            if (error) throw error;
-            return data[0];
-        } catch (error) {
-            console.warn("Supabase insert failed. Using mock response.", error);
-            return {
-                ...receipt,
-                id: Math.random().toString(36).substring(7)
-            };
+            // org_id가 없으면 사용자가 속한 첫 번째 조직 가져오기
+            if (!receipt.org_id) {
+                const { data: memberData } = await supabase
+                    .from('organization_members')
+                    .select('org_id')
+                    .eq('user_id', user.id)
+                    .limit(1)
+                    .single();
+
+                if (memberData) {
+                    receipt.org_id = memberData.org_id;
+                }
+            }
         }
+
+        const { data, error } = await supabase
+            .from('receipts')
+            .insert([receipt])
+            .select();
+
+        if (error) {
+            console.error("DB Save Error:", error);
+            throw error;
+        }
+        return data[0];
+    },
+
+    /**
+     * 영수증 이미지 업로드
+     */
+    async uploadImage(file: File, userId: string) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${userId}/${Date.now()}.${fileExt}`;
+        const filePath = `receipts/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('receipts')
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.error("Upload Error:", uploadError);
+            throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('receipts')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
     },
 
     /**
@@ -77,7 +117,7 @@ export const receiptService = {
 
             if (error) throw error;
 
-            const summary = data.reduce((acc, curr) => {
+            return data.reduce((acc, curr) => {
                 acc.total += Number(curr.total_amount);
                 acc.vat += Number(curr.vat_amount);
                 if (curr.is_deductible) {
@@ -85,19 +125,9 @@ export const receiptService = {
                 }
                 return acc;
             }, { total: 0, vat: 0, count: data.length, deductibleCount: 0 });
-
-            return summary;
         } catch (error) {
-            console.warn("Supabase summary failed, falling back to mock data.", error);
-            const summary = mockReceipts.reduce((acc, curr) => {
-                acc.total += Number(curr.total_amount);
-                acc.vat += Number(curr.vat_amount);
-                if (curr.is_deductible) {
-                    acc.deductibleCount += 1;
-                }
-                return acc;
-            }, { total: 0, vat: 0, count: mockReceipts.length, deductibleCount: 0 });
-            return summary;
+            console.warn("Summary fetch failed.", error);
+            return { total: 0, vat: 0, count: 0, deductibleCount: 0 };
         }
     }
-};
+});
