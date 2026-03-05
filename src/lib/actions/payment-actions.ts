@@ -54,5 +54,4 @@ export async function createCheckoutSession(plan: PlanType, userId?: string) {
         console.error('Stripe Checkout Error:', error);
         throw new Error(message);
     }
-    }
 }
