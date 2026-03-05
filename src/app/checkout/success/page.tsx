@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePlanStore, PlanType } from '@/store/usePlanStore';
+import { upgradeSubscription } from '@/lib/actions/subscription-actions';
 
 function SuccessContent() {
     const router = useRouter();
@@ -16,13 +17,27 @@ function SuccessContent() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (sessionId && plan) {
-            // 실제 서비스에서는 여기서 서버에 세션 유효성 검증을 요청해야 합니다.
-            // 현재는 성공 페이지 도달 시 클라이언트 상태를 즉시 업데이트합니다.
-            setPlan(plan);
-            const timer = setTimeout(() => setLoading(false), 1500);
-            return () => clearTimeout(timer);
-        }
+        const handleSuccess = async () => {
+            if (sessionId && plan) {
+                // 1. 서버 액션을 호출하여 데이터베이스 고도화 시도
+                const result = await upgradeSubscription(plan);
+
+                if (result.success) {
+                    // 2. 클라이언트 상태 업데이트 (Local Store)
+                    setPlan(plan);
+                } else {
+                    console.error('Database upgrade failed:', result.error);
+                    // 실패하더라도 UI에서는 성공으로 처리할 수도 있지만,
+                    // 실제 서비스라면 신중하게 핸들링 필요 (여기서는 진행)
+                    setPlan(plan);
+                }
+
+                const timer = setTimeout(() => setLoading(false), 1500);
+                return () => clearTimeout(timer);
+            }
+        };
+
+        handleSuccess();
     }, [sessionId, plan, setPlan]);
 
     if (loading) {

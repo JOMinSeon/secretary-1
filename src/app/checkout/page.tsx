@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { usePlanStore, PlanType } from '@/store/usePlanStore';
 import { createCheckoutSession } from '@/lib/actions/payment-actions';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/browser';
 
 const planDetails = {
     PREMIUM: {
@@ -65,6 +65,7 @@ function CheckoutContent() {
         e.preventDefault();
         setIsProcessing(true);
 
+        const supabase = createClient();
         try {
             // 0. 현재 로그인한 사용자 정보 가져오기
             const { data: { user } } = await supabase.auth.getUser();

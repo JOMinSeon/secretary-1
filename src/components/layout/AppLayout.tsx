@@ -3,6 +3,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { usePathname } from 'next/navigation';
+import { SubscriptionSync } from "./SubscriptionSync";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -14,6 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
+            <SubscriptionSync />
             <div className="flex min-h-screen w-full bg-slate-50">
                 <AppSidebar />
                 <main className="flex-1 overflow-auto">
