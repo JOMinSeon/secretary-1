@@ -18,15 +18,75 @@ import { PurchaseTrendChart } from "@/components/dashboard/PurchaseTrendChart";
 import { motion } from "framer-motion";
 import Link from 'next/link';
 import { ReceiptUploadModal } from "@/components/receipt/ReceiptUploadModal";
+import { createClient } from "@/lib/supabase/browser";
+import { createReceiptService, type ReceiptData } from "@/lib/supabase/receipt-service";
+import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
-    const { usageCount, plan } = usePlanStore();
+    const { plan, setUsageCount } = usePlanStore();
     const [stats, setStats] = useState({
-        totalExpense: 1240000,
-        vatRefund: 124000,
-        recentCount: 8,
-        lastUpdate: "2시간 전"
+        totalExpense: 0,
+        vatRefund: 0,
+        receiptCount: 0,
+        lastUpdate: "방금 전"
     });
+    const [recentReceipts, setRecentReceipts] = useState<ReceiptData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [userName, setUserName] = useState("사장님");
+
+    const router = useRouter();
+    const supabase = createClient();
+    const service = createReceiptService(supabase);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                // 1. 세션 확인
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    router.push('/login');
+                    return;
+                }
+                setUserName(user.email?.split('@')[0] || "사장님");
+
+                // 2. 이번 달 데이터 가져오기 (임시로 전체 가져와서 필터링)
+                // 실제 고도화 시에는 RPC나 단일 쿼리로 처리 권장
+                const receipts = await service.getReceipts();
+
+                const now = new Date();
+                const thisMonth = now.getMonth();
+                const thisYear = now.getFullYear();
+
+                const currentMonthReceipts = receipts.filter(r => {
+                    const d = new Date(r.receipt_date);
+                    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+                });
+
+                const total = currentMonthReceipts.reduce((acc, curr) => acc + Number(curr.total_amount), 0);
+                const vat = currentMonthReceipts.reduce((acc, curr) => acc + Number(curr.vat_amount), 0);
+
+                setStats({
+                    totalExpense: total,
+                    vatRefund: vat,
+                    receiptCount: currentMonthReceipts.length,
+                    lastUpdate: "실시간 반영됨"
+                });
+
+                // 상점 상태 업데이트 (사용량)
+                setUsageCount(currentMonthReceipts.length);
+
+                // 최근 3건
+                setRecentReceipts(receipts.slice(0, 3));
+            } catch (error) {
+                console.error("Dashboard Fetch Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, [supabase, service, router, setUsageCount]);
 
     return (
         <div className="space-y-8 pb-12">
@@ -40,7 +100,7 @@ export default function Dashboard() {
                     <Badge className="mb-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-50 border-none font-semibold px-3 py-1">
                         {plan} 멤버십 활성화됨
                     </Badge>
-                    <h2 className="text-3xl font-bold text-slate-900 leading-tight">안녕하세요, 사장님! 👋</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 leading-tight">안녕하세요, {userName}님! 👋</h2>
                     <p className="text-slate-500 mt-2 text-lg">오늘도 스마트하게 영수증을 관리해보세요.</p>
                 </div>
                 <div className="flex gap-3 relative z-10">
@@ -52,10 +112,10 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { title: "이번 달 총 지출", value: `₩${stats.totalExpense.toLocaleString()}`, change: "+12.5%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-                    { title: "분석된 영수증", value: `${usageCount}장`, change: `${plan} 플랜`, icon: Receipt, color: "text-indigo-500", bg: "bg-indigo-50" },
-                    { title: "환급 예상액", value: `₩${(stats.totalExpense * 0.1).toLocaleString()}`, change: "VAT 10%", icon: CreditCard, color: "text-amber-500", bg: "bg-amber-50" },
-                    { title: "최근 업로드", value: stats.lastUpdate, change: "정상 작동", icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
+                    { title: "이번 달 총 지출", value: loading ? "---" : `₩${stats.totalExpense.toLocaleString()}`, change: "+0%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
+                    { title: "분석된 영수증", value: loading ? "---" : `${stats.receiptCount}장`, change: `${plan} 플랜`, icon: Receipt, color: "text-indigo-500", bg: "bg-indigo-50" },
+                    { title: "환급 예상액", value: loading ? "---" : `₩${stats.vatRefund.toLocaleString()}`, change: "VAT 실집계", icon: CreditCard, color: "text-amber-500", bg: "bg-amber-50" },
+                    { title: "최근 업데이트", value: stats.lastUpdate, change: "정상 작동", icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
                 ].map((stat, i) => (
                     <motion.div
                         key={i}
@@ -134,23 +194,37 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent className="p-0">
                         <div className="divide-y divide-slate-100">
-                            {[1, 2, 3].map((item) => (
-                                <div key={item} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                                            <Receipt className="text-indigo-400" size={24} />
+                            {loading ? (
+                                <div className="p-12 text-center text-slate-400">데이터를 불러오는 중...</div>
+                            ) : recentReceipts.length > 0 ? (
+                                recentReceipts.map((item) => (
+                                    <div key={item.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                                                {item.image_url ? (
+                                                    <img src={item.image_url} alt="Receipt" className="w-full h-full object-cover opacity-80" />
+                                                ) : (
+                                                    <Receipt className="text-indigo-400" size={24} />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-slate-900 text-lg">{item.merchant_name}</div>
+                                                <div className="text-sm text-slate-400">
+                                                    {item.receipt_date ? format(new Date(item.receipt_date), 'yyyy.MM.dd | HH:mm') : '-'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-slate-900 text-lg">스타벅스 강남점</div>
-                                            <div className="text-sm text-slate-400">2024.03.05 | 14:20</div>
+                                        <div className="text-right">
+                                            <div className="font-black text-slate-900 text-lg">₩{item.total_amount?.toLocaleString()}</div>
+                                            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-none px-2 mt-1">
+                                                {item.category}
+                                            </Badge>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="font-black text-slate-900 text-lg">₩5,400</div>
-                                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-none px-2 mt-1">분석 완료</Badge>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <div className="p-12 text-center text-slate-400">최근 영수증 내역이 없습니다.</div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

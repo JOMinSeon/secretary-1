@@ -8,6 +8,7 @@ interface PlanState {
   usageCount: number;
   maxLimit: number;
   setPlan: (plan: PlanType) => void;
+  setUsageCount: (count: number) => void;
   incrementUsage: () => void;
   resetUsage: () => void;
 }
@@ -38,6 +39,7 @@ export const usePlanStore = create<PlanState>()(
           maxLimit: PLAN_LIMITS[plan]
         });
       },
+      setUsageCount: (count: number) => set({ usageCount: count }),
       incrementUsage: () => set((state) => ({
         usageCount: state.usageCount + 1
       })),
