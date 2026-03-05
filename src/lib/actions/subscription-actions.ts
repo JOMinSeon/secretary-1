@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { PlanType } from '@/store/usePlanStore';
 import { stripe } from '@/lib/stripe';
+import { revalidatePath } from 'next/cache';
 
 export async function upgradeSubscription(planName: PlanType, sessionId: string) {
     try {
@@ -10,76 +11,29 @@ export async function upgradeSubscription(planName: PlanType, sessionId: string)
 
         // 1. 현재 사용자 가져오기
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-            throw new Error('User not authenticated');
-        }
+        if (userError || !user) throw new Error('User not authenticated');
 
-        // 1-1. Stripe 결제 세션 검증 (보안 대책)
+        // 2. Stripe 결제 세션 검증 (세션 ID 검증)
         const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
         if (stripeSession.payment_status !== 'paid') {
             throw new Error('Payment verification failed.');
         }
 
-        if (stripeSession.metadata?.plan !== planName) {
-            throw new Error('Plan tier mismatch.');
-        }
+        /**
+         * [SECURITY] 직접적인 DB 업데이트 로직 제거
+         * 민감한 구독 정보 변경은 오직 신뢰할 수 있는 Webhook(supabaseAdmin 사용)에서만 처리합니다.
+         * 여기서는 사용자의 최신 정보를 반영하기 위해 경로만 캐시 무효화(revalidatePath)합니다.
+         */
 
-        // 2. 사용자의 조직 ID 가져오기
-        const { data: memberData, error: memberError } = await supabase
-            .from('organization_members')
-            .select('org_id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (memberError || !memberData) {
-            throw new Error('Could not find user organization');
-        }
-
-        const orgId = memberData.org_id;
-
-        // 3. 플랜 정보 가져오기
-        const { data: planData, error: planError } = await supabase
-            .from('plans')
-            .select('*')
-            .eq('name', planName)
-            .single();
-
-        if (planError || !planData) {
-            throw new Error('Invalid plan selected');
-        }
-
-        // 4. 구독 상태 업데이트
-        const { error: subError } = await supabase
-            .from('subscriptions')
-            .upsert({
-                org_id: orgId,
-                plan_id: planData.id,
-                status: 'ACTIVE',
-                current_period_start: new Date().toISOString(),
-                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30일 후
-            }, { onConflict: 'org_id' });
-
-        if (subError) {
-            throw subError;
-        }
-
-        // 5. 조직 크레딧(한도) 업데이트
-        const { error: creditError } = await supabase
-            .from('organization_credits')
-            .update({
-                subscription_limit: planData.base_receipt_limit,
-                updated_at: new Date().toISOString()
-            })
-            .eq('org_id', orgId);
-
-        if (creditError) {
-            throw creditError;
-        }
+        // 데이터가 아직 웹훅에 의해 업데이트되지 않았을 수 있으므로 대시보드 진입 시 최신화 유도
+        revalidatePath('/');
+        revalidatePath('/dashboard');
+        revalidatePath('/reports');
 
         return { success: true };
     } catch (error) {
         const message = error instanceof Error ? error.message : '알 수 없는 오류';
-        console.error('Upgrade Error:', error);
+        console.error('Upgrade Verification Error:', error);
         return { success: false, error: message };
     }
 }

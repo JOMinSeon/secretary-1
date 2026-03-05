@@ -3,6 +3,7 @@
 import { stripe } from '@/lib/stripe';
 import { PlanType } from '@/store/usePlanStore';
 import { headers } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 const PLAN_PRICES: Record<string, string> = {
     // 실제 Stripe 대시보드에서 생성한 Product/Price ID를 여기에 입력하세요.
@@ -11,10 +12,17 @@ const PLAN_PRICES: Record<string, string> = {
     PRO: 'pro_price_id',
 };
 
-export async function createCheckoutSession(plan: PlanType, userId?: string) {
+export async function createCheckoutSession(plan: PlanType) {
     try {
         const headerList = await headers();
         const origin = headerList.get('origin');
+
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error('로그인이 필요한 서비스입니다.');
+        }
 
         if (!origin) {
             throw new Error('Could not determine origin for redirect URLs.');
@@ -44,7 +52,7 @@ export async function createCheckoutSession(plan: PlanType, userId?: string) {
             cancel_url: `${origin}/pricing`,
             metadata: {
                 plan: plan,
-                userId: userId || '',
+                userId: user.id,
             },
         });
 

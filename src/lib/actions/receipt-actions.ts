@@ -1,14 +1,26 @@
 "use server";
 
 import { GoogleGenerativeAI, Part } from "@google/generative-ai";
+import { createClient } from "@/lib/supabase/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-// Minimal test prompt
 
 export async function analyzeReceipt(base64Image: string, fileName: string) {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error("GEMINI_API_KEY is not configured.");
+    }
+
+    // 1. 보안: 입력값 유효성 검사 (Payload Validation)
+    if (!base64Image || base64Image.length > 7 * 1024 * 1024) { // 7MB 제한 예시
+        throw new Error("이미지 크기가 너무 큽니다 (최대 7MB).");
+    }
+
+    // 2. 보안: 인증 검사 (Authentication)
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        throw new Error("분석을 위해 로그인이 필요합니다.");
     }
 
     const prompt = `

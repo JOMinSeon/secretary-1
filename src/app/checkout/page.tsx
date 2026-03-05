@@ -70,8 +70,8 @@ function CheckoutContent() {
             // 0. 현재 로그인한 사용자 정보 가져오기
             const { data: { user } } = await supabase.auth.getUser();
 
-            // 1. 서버 액션을 통해 Stripe Checkout 세션 생성
-            const { sessionId, url } = await createCheckoutSession(selectedPlan, user?.id);
+            // 1. 서버 액션을 통해 Stripe Checkout 세션 생성 (보안: userId 파라미터 제거)
+            const { sessionId, url } = await createCheckoutSession(selectedPlan);
 
             if (url) {
                 // Stripe 호스팅 결제 페이지로 리다이렉트

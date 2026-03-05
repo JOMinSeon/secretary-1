@@ -48,19 +48,39 @@ export async function POST(req: Request) {
                 .single();
 
             if (memberData?.org_id) {
-                const { error: subError } = await supabaseAdmin
-                    .from('subscriptions')
-                    .upsert({
-                        org_id: memberData.org_id,
-                        status: 'ACTIVE',
-                        pg_subscription_id: session.subscription as string,
-                        current_period_start: new Date().toISOString(),
-                        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 대략 30일
-                    });
+                // 1-2. 활성 플랜 정보 조회
+                const { data: planData } = await supabaseAdmin
+                    .from('plans')
+                    .select('id, base_receipt_limit')
+                    .eq('name', plan)
+                    .single();
 
-                if (subError) console.error('Subscription update error:', subError);
+                if (planData) {
+                    // 1-3. 구독 정보(Subscriptions) 테이블 기록
+                    const { error: subError } = await supabaseAdmin
+                        .from('subscriptions')
+                        .upsert({
+                            org_id: memberData.org_id,
+                            plan_id: planData.id,
+                            status: 'ACTIVE',
+                            pg_subscription_id: session.subscription as string,
+                            current_period_start: new Date().toISOString(),
+                            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        }, { onConflict: 'org_id' });
 
-                // 1-3. 결제 내역 기록
+                    if (subError) console.error('Subscription update error:', subError);
+
+                    // 1-4. 조직 크레딧(한도) 업데이트 추가
+                    await supabaseAdmin
+                        .from('organization_credits')
+                        .update({
+                            subscription_limit: planData.base_receipt_limit,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('org_id', memberData.org_id);
+                }
+
+                // 1-5. 결제 내역 기록
                 await supabaseAdmin.from('billing_history').insert({
                     org_id: memberData.org_id,
                     amount: session.amount_total ? session.amount_total / 100 : 0,
