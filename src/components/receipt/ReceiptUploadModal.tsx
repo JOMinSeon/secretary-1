@@ -4,7 +4,8 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, Loader2, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { analyzeReceipt } from '@/lib/actions/receipt-actions';
-import { receiptService } from '@/lib/supabase/receipt-service';
+import { createReceiptService } from '@/lib/supabase/receipt-service';
+import { createClient } from '@/lib/supabase/browser';
 import { usePlanStore } from '@/store/usePlanStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -66,9 +67,12 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
             const analysis = await analyzeReceipt(preview, file.name);
 
             // 2. Supabase 저장
-            await receiptService.saveReceipt({
+            const supabase = createClient();
+            const service = createReceiptService(supabase);
+
+            await service.saveReceipt({
                 merchant_name: analysis.merchant_name || file.name,
-                receipt_date: analysis.receipt_date || new Array().toLocaleString(),
+                receipt_date: analysis.receipt_date || new Date().toISOString(),
                 total_amount: Number(analysis.total_amount) || 0,
                 vat_amount: Number(analysis.vat_amount) || 0,
                 category: analysis.category || 'Other',

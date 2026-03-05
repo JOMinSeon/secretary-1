@@ -1,5 +1,8 @@
+'use server';
+
 import { createClient } from '@/lib/supabase/server';
 import { createReceiptService } from '../supabase/receipt-service';
+// @ts-ignore
 import * as XLSX from 'xlsx';
 
 /**
