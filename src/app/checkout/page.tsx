@@ -20,7 +20,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { usePlanStore, PlanType } from '@/store/usePlanStore';
 import { createCheckoutSession } from '@/lib/actions/payment-actions';
-import { getStripe } from '@/lib/stripe-client';
 import { supabase } from '@/lib/supabase/client';
 
 const planDetails = {
@@ -74,14 +73,10 @@ function CheckoutContent() {
             const { sessionId, url } = await createCheckoutSession(selectedPlan, user?.id);
 
             if (url) {
-                // 2. Stripe가 호스팅하는 결제 페이지로 리다이렉트
+                // Stripe 호스팅 결제 페이지로 리다이렉트
                 window.location.href = url;
             } else {
-                // 또는 sessionId를 사용하여 체크아웃창 열기
-                const stripe = await getStripe();
-                if (stripe) {
-                    await stripe.redirectToCheckout({ sessionId });
-                }
+                throw new Error('Stripe checkout URL is missing.');
             }
         } catch (error) {
             console.error('Checkout Error:', error);

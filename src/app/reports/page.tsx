@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ import * as XLSX from 'xlsx';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
-export default function ReportsPage() {
+function ReportsContent() {
     const { isPremium } = useSubscription();
     const searchParams = useSearchParams();
     const reason = searchParams.get('reason');
@@ -305,5 +305,17 @@ export default function ReportsPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function ReportsPage() {
+    return (
+        <Suspense fallback={
+            <div className="h-[80vh] flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            </div>
+        }>
+            <ReportsContent />
+        </Suspense>
     );
 }

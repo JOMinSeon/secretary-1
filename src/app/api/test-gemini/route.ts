@@ -28,14 +28,7 @@ export async function GET() {
             model: "gemini-1.5-flash"
         });
     } catch (error: any) {
-        // List models to debug
-        let availableModels: string[] = [];
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const listResult = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" }).listModels(); // This is not how listModels works
-            // Correct way to list models in newer SDK:
-            // Actually, genAI.listModels() might be the one.
-        } catch (e) { }
+
 
         return NextResponse.json({
             error: error.message,
