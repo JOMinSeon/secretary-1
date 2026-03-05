@@ -9,13 +9,15 @@ import {
   TrendingUp,
   CreditCard,
   Clock,
-  Plus,
-  ArrowRight
+  ArrowRight,
+  Plus
 } from "lucide-react";
 import { usePlanStore } from "@/store/usePlanStore";
 import { UsageIndicator } from "@/components/dashboard/UsageIndicator";
 import { PurchaseTrendChart } from "@/components/dashboard/PurchaseTrendChart";
 import { motion } from "framer-motion";
+import Link from 'next/link';
+import { ReceiptUploadModal } from "@/components/receipt/ReceiptUploadModal";
 
 export default function Dashboard() {
   const { usageCount, plan } = usePlanStore();
@@ -46,10 +48,7 @@ export default function Dashboard() {
           <p className="text-slate-500 mt-2 text-lg">오늘도 스마트하게 영수증을 관리해보세요.</p>
         </div>
         <div className="flex gap-3 relative z-10">
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-14 px-8 text-lg font-semibold shadow-lg shadow-indigo-100 transition-all hover:-translate-y-1">
-            <Plus className="w-5 h-5 mr-2" />
-            새 영수증 업로드
-          </Button>
+          <ReceiptUploadModal onSuccess={() => window.location.reload()} />
         </div>
         {/* Decorative elements */}
         <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full -mr-20 -mt-20 opacity-50 blur-3xl" />
@@ -116,13 +115,16 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full bg-white text-indigo-900 hover:bg-slate-100 font-bold py-6 rounded-2xl shadow-lg transition-transform hover:-translate-y-0.5">
-                지금 업그레이드
-              </Button>
+              <Link href="/pricing" className="block w-full">
+                <Button className="w-full bg-white text-indigo-900 hover:bg-slate-100 font-extrabold py-6 rounded-2xl shadow-lg transition-all hover:scale-[1.02] active:scale-95">
+                  지금 업그레이드
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
       </div>
+
 
       {/* Recent Activity Section */}
       <motion.div

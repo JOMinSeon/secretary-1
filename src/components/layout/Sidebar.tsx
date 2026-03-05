@@ -83,10 +83,12 @@ export function AppSidebar() {
                         <span className="font-bold">{Math.round(usagePercentage)}%</span>
                     </div>
                     {!isPremium && (
-                        <button className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
-                            <Zap className="w-3 h-3 fill-current" />
-                            업그레이드
-                        </button>
+                        <Link href="/pricing" className="block w-full">
+                            <button className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
+                                <Zap className="w-3 h-3 fill-current" />
+                                업그레이드
+                            </button>
+                        </Link>
                     )}
                 </div>
             </SidebarFooter>
