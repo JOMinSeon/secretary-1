@@ -174,5 +174,32 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
             console.error("Trend Fetch Error:", error);
             return [];
         }
+    },
+
+    /**
+     * 영수증 수정
+     */
+    async updateReceipt(id: string, updates: Partial<ReceiptData>) {
+        const { data, error } = await supabase
+            .from('receipts')
+            .update(updates)
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        return data[0];
+    },
+
+    /**
+     * 영수증 삭제
+     */
+    async deleteReceipt(id: string) {
+        const { error } = await supabase
+            .from('receipts')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
     }
 });

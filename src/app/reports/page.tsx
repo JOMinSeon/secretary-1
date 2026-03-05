@@ -40,6 +40,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 // @ts-ignore
 import * as XLSX from 'xlsx';
+import { getBusinessProfile, type BusinessProfile } from "@/lib/actions/profile-actions";
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
@@ -54,6 +55,7 @@ function ReportsContent() {
     const [summary, setSummary] = useState({ total: 0, vat: 0, count: 0, deductible: 0 });
     const [categoryData, setCategoryData] = useState<any[]>([]);
     const [trendData, setTrendData] = useState<any[]>([]);
+    const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
     const supabase = createClient();
     const service = createReceiptService(supabase);
@@ -61,6 +63,10 @@ function ReportsContent() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // 사업자 정보 가져오기
+                const p = await getBusinessProfile();
+                setProfile(p);
+
                 const result = await service.getReceipts();
                 setData(result);
 
@@ -134,7 +140,8 @@ function ReportsContent() {
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: '#f8fafc'
+                backgroundColor: '#f8fafc',
+                ignoreElements: (element) => element.classList.contains('no-print')
             });
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -186,7 +193,38 @@ function ReportsContent() {
     }
 
     return (
-        <div className="space-y-8 pb-12" id="report-content">
+        <div className="space-y-8 pb-12 p-4 md:p-8 bg-slate-50 min-h-screen" id="report-content">
+            {profile?.businessName && (
+                <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-8 flex flex-col md:flex-row justify-between gap-6">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl">
+                                {profile.businessName.substring(0, 1)}
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-black text-slate-900">{profile.businessName}</h1>
+                                <p className="text-sm text-slate-400 font-medium">공식 지출 증빙 보고서</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2 text-sm text-slate-600 italic">
+                            <div className="flex justify-between border-b border-slate-50 py-1">
+                                <span className="text-slate-400">사업자 등록 번호</span>
+                                <span className="font-bold">{profile.businessNumber || '-'}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-slate-50 py-1">
+                                <span className="text-slate-400">대표자</span>
+                                <span className="font-bold">{profile.representativeName || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="md:text-right flex flex-col justify-end space-y-1">
+                        <p className="text-xs text-slate-400 uppercase font-bold tracking-widest">보고서 생성 일시</p>
+                        <p className="text-slate-900 font-bold">{new Date().toLocaleString()}</p>
+                        <p className="text-xs text-slate-500 mt-2">{profile.address || '-'}</p>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="no-print">
                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">지출 리포트</h2>

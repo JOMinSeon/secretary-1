@@ -20,8 +20,49 @@ import { UsageIndicator } from "@/components/dashboard/UsageIndicator";
 import { motion } from "framer-motion";
 import Link from 'next/link';
 
+import {
+    getBusinessProfile,
+    updateBusinessProfile,
+    type BusinessProfile
+} from "@/lib/actions/profile-actions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+
 export default function SettingsPage() {
-    const { plan, resetUsage, usageCount, maxLimit } = usePlanStore();
+    const { plan, resetUsage } = usePlanStore();
+    const [profile, setProfile] = useState<BusinessProfile>({
+        businessName: '',
+        businessNumber: '',
+        representativeName: '',
+        address: '',
+        phone: ''
+    });
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadProfile() {
+            const data = await getBusinessProfile();
+            if (data) setProfile(data);
+            setIsLoading(false);
+        }
+        loadProfile();
+    }, []);
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        const result = await updateBusinessProfile(profile);
+        if (result.success) {
+            alert('사업자 정보가 저장되었습니다.');
+            setIsEditing(false);
+        } else {
+            alert('저장 중 오류가 발생했습니다: ' + result.error);
+        }
+        setIsSaving(false);
+    };
 
     const handleResetUsage = () => {
         if (confirm('데모를 위해 이달의 사용량을 초기화하시겠습니까?')) {
@@ -29,6 +70,12 @@ export default function SettingsPage() {
             alert('사용량이 초기화되었습니다.');
         }
     };
+
+    if (isLoading) {
+        return <div className="h-96 flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -43,7 +90,7 @@ export default function SettingsPage() {
                 {/* Left Sidebar Links */}
                 <div className="space-y-2">
                     {[
-                        { name: '프로필 정보', icon: User, active: true },
+                        { name: '사업자 정보', icon: User, active: true },
                         { name: '구독 관리', icon: CreditCard },
                         { name: '알림 설정', icon: Bell },
                         { name: '보안 및 개인정보', icon: Shield },
@@ -69,34 +116,120 @@ export default function SettingsPage() {
                 {/* Main Settings Content */}
                 <div className="md:col-span-2 space-y-8">
                     {/* Profile Card */}
-                    <Card className="border-none shadow-sm overflow-hidden">
-                        <CardHeader className="bg-slate-50/50 pb-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center text-indigo-600 font-black text-2xl border-4 border-white shadow-sm">
-                                    JD
-                                </div>
-                                <div>
-                                    <CardTitle className="text-2xl font-bold">홍길동 사장님</CardTitle>
-                                    <CardDescription>CEO at axAI Tech</CardDescription>
-                                    <div className="flex gap-2 mt-2">
-                                        <Badge className="bg-indigo-600 border-none">{plan} 플랜</Badge>
-                                        <Badge variant="outline" className="border-slate-200 text-slate-500">계정 활성</Badge>
+                    <Card className="border-none shadow-sm overflow-hidden bg-white">
+                        <CardHeader className="bg-slate-50/50 pb-8 border-b border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center text-white font-black text-2xl border-4 border-white shadow-md">
+                                        {profile.businessName.substring(0, 1) || 'B'}
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-2xl font-bold">{profile.businessName || '사업자 정보 미입력'}</CardTitle>
+                                        <CardDescription>{profile.representativeName ? `${profile.representativeName} 대표님` : '대표자 명의를 등록하세요'}</CardDescription>
+                                        <div className="flex gap-2 mt-2">
+                                            <Badge className="bg-indigo-600 border-none">{plan} 플랜</Badge>
+                                            <Badge variant="outline" className="border-slate-200 text-slate-500">계정 활성</Badge>
+                                        </div>
                                     </div>
                                 </div>
+                                {!isEditing && (
+                                    <Button
+                                        onClick={() => setIsEditing(true)}
+                                        variant="outline"
+                                        className="rounded-xl border-slate-200"
+                                    >
+                                        정보 수정
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
-                        <CardContent className="pt-8 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">이메일</label>
-                                    <p className="font-medium text-slate-900">ceo@axai.example.com</p>
+                        <CardContent className="pt-8 bg-white">
+                            {isEditing ? (
+                                <form onSubmit={handleSave} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="businessName">상호명</Label>
+                                            <Input
+                                                id="businessName"
+                                                value={profile.businessName}
+                                                onChange={(e) => setProfile({ ...profile, businessName: e.target.value })}
+                                                placeholder="예: (주)에이아이세크리터리"
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="businessNumber">사업자 등록 번호</Label>
+                                            <Input
+                                                id="businessNumber"
+                                                value={profile.businessNumber}
+                                                onChange={(e) => setProfile({ ...profile, businessNumber: e.target.value })}
+                                                placeholder="000-00-00000"
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="representativeName">대표자 성함</Label>
+                                            <Input
+                                                id="representativeName"
+                                                value={profile.representativeName}
+                                                onChange={(e) => setProfile({ ...profile, representativeName: e.target.value })}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone">연락처</Label>
+                                            <Input
+                                                id="phone"
+                                                value={profile.phone}
+                                                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label htmlFor="address">사업장 주소</Label>
+                                            <Input
+                                                id="address"
+                                                value={profile.address}
+                                                onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                                                className="rounded-xl"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => setIsEditing(false)}
+                                            className="rounded-xl"
+                                        >
+                                            취소
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={isSaving}
+                                            className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8"
+                                        >
+                                            {isSaving ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
+                                            저장하기
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">사업자 번호</label>
+                                        <p className="font-semibold text-slate-900 text-lg">{profile.businessNumber || '-'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">연락처</label>
+                                        <p className="font-semibold text-slate-900 text-lg">{profile.phone || '-'}</p>
+                                    </div>
+                                    <div className="space-y-1 md:col-span-2">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">사업장 주소</label>
+                                        <p className="font-semibold text-slate-900">{profile.address || '-'}</p>
+                                    </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">전화번호</label>
-                                    <p className="font-medium text-slate-900">010-1234-5678</p>
-                                </div>
-                            </div>
-                            <Button variant="outline" className="rounded-xl border-slate-200">개인정보 수정</Button>
+                            )}
                         </CardContent>
                     </Card>
 

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createReceiptService } from '../supabase/receipt-service';
 // @ts-ignore
 import * as XLSX from 'xlsx';
+import { getBusinessProfile } from './profile-actions';
 
 /**
  * 리포트용 지출 데이터 요약
@@ -32,9 +33,20 @@ export async function generateExcelReport() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Unauthenticated');
 
+        const profile = await getBusinessProfile();
         const receipts = await service.getReceipts();
 
         // 2. 엑셀에 들어갈 데이터 가공 (한글 헤더 지원)
+        const headerInfo = [
+            ['공식 지출 증빙 모음'],
+            ['발행일시', new Date().toLocaleString()],
+            ['상호명', profile?.businessName || '-'],
+            ['사업자번호', profile?.businessNumber || '-'],
+            ['대표자', profile?.representativeName || '-'],
+            ['주소', profile?.address || '-'],
+            [] // 빈 줄
+        ];
+
         const worksheetData = receipts.map((r: any) => ({
             '상호명': r.merchant_name,
             '결제일시': r.receipt_date,
@@ -46,8 +58,9 @@ export async function generateExcelReport() {
             '영수증 이미지': r.image_url || 'N/A'
         }));
 
-        // 워크북 생성
-        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+        // 워크북 생성 (헤더 정보 먼저 추가 후 데이터 추가)
+        const worksheet = XLSX.utils.aoa_to_sheet(headerInfo);
+        XLSX.utils.sheet_add_json(worksheet, worksheetData, { origin: 'A8' });
 
         // 컬럼 너비 설정 (가독성 향상)
         const wscols = [
