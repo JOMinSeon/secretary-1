@@ -44,8 +44,12 @@ export default function PricingPage() {
     const router = useRouter();
 
     const handleSelectPlan = (planName: PlanType) => {
-        setPlan(planName);
-        router.push('/');
+        if (planName === 'FREE') {
+            setPlan(planName);
+            router.push('/');
+        } else {
+            router.push(`/checkout?plan=${planName}`);
+        }
     };
 
     return (

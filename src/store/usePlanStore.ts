@@ -18,23 +18,38 @@ const PLAN_LIMITS: Record<PlanType, number> = {
   PRO: Infinity,
 };
 
+// Helper to set cookie for middleware access
+const setPlanCookie = (plan: string) => {
+  if (typeof document !== 'undefined') {
+    document.cookie = `axai_plan=${plan}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+};
+
 export const usePlanStore = create<PlanState>()(
   persist(
     (set) => ({
       plan: 'FREE',
       usageCount: 0,
       maxLimit: PLAN_LIMITS.FREE,
-      setPlan: (plan: PlanType) => set({ 
-        plan, 
-        maxLimit: PLAN_LIMITS[plan] 
-      }),
-      incrementUsage: () => set((state) => ({ 
-        usageCount: state.usageCount + 1 
+      setPlan: (plan: PlanType) => {
+        setPlanCookie(plan);
+        set({
+          plan,
+          maxLimit: PLAN_LIMITS[plan]
+        });
+      },
+      incrementUsage: () => set((state) => ({
+        usageCount: state.usageCount + 1
       })),
       resetUsage: () => set({ usageCount: 0 }),
     }),
     {
       name: 'plan-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          setPlanCookie(state.plan);
+        }
+      },
     }
   )
 );

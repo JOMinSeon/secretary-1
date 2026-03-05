@@ -1,42 +1,195 @@
--- 3단계: 매입 내역 DB 및 플랜별 필터링용 Supabase 스키마
--- Supabase SQL Editor에 복사하여 붙여넣고 실행하세요.
+-- axAI SaaS를 위한 고성능 확장형 데이터베이스 스키마 (v1.0)
+-- Supabase SQL Editor에서 실행하세요.
 
--- 1. receipts 테이블 생성 (영수증 내역)
-CREATE TABLE IF NOT EXISTS public.receipts (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    image_url TEXT,
-    merchant_name TEXT,
-    receipt_date TIMESTAMP WITH TIME ZONE,
-    total_amount NUMERIC(10, 2),
-    vat_amount NUMERIC(10, 2),
-    items JSONB,
-    category TEXT,
-    is_deductible BOOLEAN DEFAULT true,
-    status TEXT DEFAULT 'completed',
+-- 0. 확장 프로그램 활성화 및 초기화
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 기존 간단한 영수증 테이블이 있을 경우 삭제 (SaaS 스키마로 업그레이드)
+DROP TABLE IF EXISTS public.receipts CASCADE;
+DROP TABLE IF EXISTS public.ai_usage_logs CASCADE;
+DROP TABLE IF EXISTS public.organization_credits CASCADE;
+DROP TABLE IF EXISTS public.subscriptions CASCADE;
+
+-- 1. 조직(Organizations) 관리 - 테넌트 단위
+CREATE TABLE IF NOT EXISTS public.organizations (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    billing_email VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. 사용자 프로필(Profiles) - auth.users와 연동
+-- Supabase Auth의 사용자를 확장하는 테이블입니다.
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    full_name VARCHAR(255),
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3. 조직 구성원(Organization Members) - 다대다 관계 및 권한
+CREATE TABLE IF NOT EXISTS public.organization_members (
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'MEMBER', -- OWNER, ADMIN, MEMBER
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    PRIMARY KEY (org_id, user_id)
+);
+
+-- 4. 구독 플랜(Plans)
+CREATE TABLE IF NOT EXISTS public.plans (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name VARCHAR(100) NOT NULL, -- Free, Pro, Enterprise
+    description TEXT,
+    billing_cycle VARCHAR(50) NOT NULL, -- MONTHLY, YEARLY
+    price DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'KRW',
+    base_receipt_limit INT NOT NULL DEFAULT 10, -- 영수증 분석 제한
+    stripe_price_id VARCHAR(255),
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- RLS(Row Level Security) 설정
+-- 5. 구독 상태(Subscriptions)
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE UNIQUE,
+    plan_id UUID REFERENCES public.plans(id),
+    status VARCHAR(50) NOT NULL, -- ACTIVE, PAST_DUE, CANCELED, TRIALING
+    current_period_start TIMESTAMP WITH TIME ZONE NOT NULL,
+    current_period_end TIMESTAMP WITH TIME ZONE NOT NULL,
+    cancel_at_period_end BOOLEAN DEFAULT false,
+    pg_subscription_id VARCHAR(255), -- Stripe 등 외부 결제 ID
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6. 영수증(Receipts) - 조직 단위로 귀속
+CREATE TABLE IF NOT EXISTS public.receipts (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    merchant_name TEXT,
+    receipt_date TIMESTAMP WITH TIME ZONE,
+    total_amount NUMERIC(15, 2),
+    vat_amount NUMERIC(15, 2),
+    items JSONB,
+    category VARCHAR(50),
+    is_deductible BOOLEAN DEFAULT true,
+    image_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 7. AI 사용량 로그(AI Usage Logs)
+CREATE TABLE IF NOT EXISTS public.ai_usage_logs (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id),
+    model_name VARCHAR(100) NOT NULL,
+    prompt_tokens INT,
+    completion_tokens INT,
+    total_tokens INT,
+    action_type VARCHAR(50), -- RECEIPT_ANALYSIS, CHAT, etc.
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 8. 조직 크레딧(Organization Credits) - Metering 실시간 잔량
+CREATE TABLE IF NOT EXISTS public.organization_credits (
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE PRIMARY KEY,
+    subscription_limit INT DEFAULT 10, -- 이달 제공량
+    used_count INT DEFAULT 0, -- 사용량
+    purchased_credits DECIMAL(15, 2) DEFAULT 0, -- 추가 구매 크레딧
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 9. 결제 내역(Billing History)
+CREATE TABLE IF NOT EXISTS public.billing_history (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    subscription_id UUID REFERENCES public.subscriptions(id),
+    amount DECIMAL(15, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL, -- SUCCESS, FAILED, REFUNDED
+    invoice_url TEXT,
+    paid_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 10. 결제 수단(Payment Methods) - 빌링키 기반
+CREATE TABLE IF NOT EXISTS public.payment_methods (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    org_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    pg_provider VARCHAR(50) NOT NULL, -- STRIPE, PORTONE
+    billing_key VARCHAR(255) NOT NULL,
+    card_brand VARCHAR(50),
+    card_last4 VARCHAR(4),
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- [[보안 및 정책 설정 (RLS)]] --
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.organization_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_usage_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.organization_credits ENABLE ROW LEVEL SECURITY;
 
--- 자신의 영수증 데이터만 CRUD 할 수 있도록 정책 설정
-CREATE POLICY "Users can view their own receipts" 
-    ON public.receipts FOR SELECT 
-    USING (auth.uid() = user_id);
+-- 조직 멤버만 해당 조직의 데이터를 볼 수 있는 정책 예시 (Receipts)
+CREATE POLICY "Members can view org receipts" ON public.receipts
+FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE org_id = public.receipts.org_id
+        AND user_id = auth.uid()
+    )
+);
 
-CREATE POLICY "Users can insert their own receipts" 
-    ON public.receipts FOR INSERT 
-    WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Members can insert org receipts" ON public.receipts
+FOR INSERT WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE org_id = public.receipts.org_id
+        AND user_id = auth.uid()
+    )
+);
 
-CREATE POLICY "Users can update their own receipts" 
-    ON public.receipts FOR UPDATE 
-    USING (auth.uid() = user_id);
+-- [[초기 데이터 시딩 (Plans)]] --
+INSERT INTO public.plans (name, description, billing_cycle, price, base_receipt_limit)
+VALUES 
+('FREE', '기본 영수증 분석 (월 10회)', 'MONTHLY', 0, 10),
+('PREMIUM', '고급 분석 및 무제한 리포트 (월 100회)', 'MONTHLY', 19000, 100),
+('PRO', '전문가용 무제한 플랜', 'MONTHLY', 49000, 999999);
 
-CREATE POLICY "Users can delete their own receipts" 
-    ON public.receipts FOR DELETE 
-    USING (auth.uid() = user_id);
+-- [[트리거: 새 사용자 가입 시 자동 워크스페이스 생성]] --
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+    new_org_id UUID;
+BEGIN
+    -- 1. 조직 생성
+    INSERT INTO public.organizations (name, billing_email)
+    VALUES (new.email || '의 워크스페이스', new.email)
+    RETURNING id INTO new_org_id;
 
--- 2. Mock Data 삽입 (테스트용)
--- (auth.users 에 유효한 user_id 가 없으면 오류가 날 수 있으므로, 테스트용으로 user_id를 임의로 넣거나 생략합니다)
--- 실제 연동 전 UI 테스트를 위해 RLS를 잠시 비활성화하거나, user_id 없이 조회할 수 있도록 public 접속 권한을 추가할 수도 있습니다.
+    -- 2. 프로필 생성
+    INSERT INTO public.profiles (id, email)
+    VALUES (new.id, new.email);
+
+    -- 3. 조직 구성원으로 등록 (OWNER)
+    INSERT INTO public.organization_members (org_id, user_id, role)
+    VALUES (new_org_id, new.id, 'OWNER');
+
+    -- 4. 기본 크레딧 설정
+    INSERT INTO public.organization_credits (org_id, subscription_limit)
+    VALUES (new_org_id, 10);
+    
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- auth.users에 신규 가입 시 트리거 실행
+-- CREATE TRIGGER on_auth_user_created
+--   AFTER INSERT ON auth.users
+--   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

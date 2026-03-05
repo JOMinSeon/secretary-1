@@ -26,18 +26,27 @@ import {
     Lock,
     ArrowRight,
     ChevronRight,
-    AlertCircle
+    AlertCircle,
+    Loader2
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { receiptService, ReceiptData } from "@/lib/supabase/receipt-service";
 import { motion } from "framer-motion";
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
 export default function ReportsPage() {
     const { isPremium } = useSubscription();
+    const searchParams = useSearchParams();
+    const reason = searchParams.get('reason');
+
     const [loading, setLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
     const [data, setData] = useState<ReceiptData[]>([]);
     const [summary, setSummary] = useState({ total: 0, vat: 0, count: 0, deductible: 0 });
     const [categoryData, setCategoryData] = useState<any[]>([]);
@@ -83,6 +92,42 @@ export default function ReportsPage() {
         fetchData();
     }, []);
 
+    const exportToExcel = () => {
+        if (data.length === 0) {
+            alert("내보낼 데이터가 없습니다.");
+            return;
+        }
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Receipts");
+        XLSX.writeFile(workbook, `axAI_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const exportToPDF = async () => {
+        const element = document.getElementById('report-content');
+        if (!element) return;
+
+        try {
+            setIsExporting(true);
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#f8fafc'
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`axAI_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('PDF Export Error:', error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     if (!isPremium) {
         return (
             <div className="h-[80vh] flex items-center justify-center p-6">
@@ -91,9 +136,12 @@ export default function ReportsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-md w-full text-center space-y-6 bg-white p-10 rounded-3xl border border-slate-200 shadow-xl"
                 >
-                    <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <Lock className="w-10 h-10 text-indigo-600" />
+                    <div className="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <Lock className="w-10 h-10 text-amber-600" />
                     </div>
+                    {reason === 'premium_only' && (
+                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-3 py-1 mb-2">프리미엄 기능</Badge>
+                    )}
                     <h2 className="text-3xl font-bold text-slate-900">상세 리포트 잠김</h2>
                     <p className="text-slate-500 text-lg leading-relaxed">
                         월별 분석, 카테고리별 통계 및 세무사 전송용 엑셀 다운로드는 <span className="font-bold text-indigo-600">Premium</span> 플랜 전용 기능입니다.
@@ -116,20 +164,32 @@ export default function ReportsPage() {
     }
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-8 pb-12" id="report-content">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
+                <div className="no-print">
                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">지출 리포트</h2>
                     <p className="text-slate-500 mt-1">데이터 분석을 통해 세금 절감 포인트를 찾아보세요.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="rounded-xl border-slate-200 h-11">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        2024년 3월
-                    </Button>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl h-11 px-6 shadow-md shadow-indigo-100">
+                <div className="flex gap-2 no-print">
+                    <Button
+                        variant="outline"
+                        onClick={exportToExcel}
+                        className="rounded-xl border-slate-200 h-11"
+                    >
                         <Download className="w-4 h-4 mr-2" />
-                        전체 리포트 추출
+                        Excel 리포트 추출
+                    </Button>
+                    <Button
+                        onClick={exportToPDF}
+                        disabled={isExporting}
+                        className="bg-indigo-600 hover:bg-indigo-700 rounded-xl h-11 px-6 shadow-md shadow-indigo-100"
+                    >
+                        {isExporting ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Download className="w-4 h-4 mr-2" />
+                        )}
+                        PDF 리포트 추출
                     </Button>
                 </div>
             </div>
