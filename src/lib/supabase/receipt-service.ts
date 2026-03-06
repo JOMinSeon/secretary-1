@@ -135,40 +135,47 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
      * 월별 지출 트렌드 조회 (최근 6개월)
      */
     async getMonthlyTrend() {
+        // [복잡도 개선]
+        // 전: O(N log N) (DB 정렬) + O(N) (자바스크립트 루프 + Date 객체 생성 x N)
+        // 후: O(N) (DB 무정렬 조회 + 자바스크립트 단일 루프 + 문자열 파싱)
         try {
             const now = new Date();
             const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
+            // DB 레벨의 정렬 제거 (메모리 집합 과정에서 순서가 정의됨)
             const { data, error } = await supabase
                 .from('receipts')
                 .select('total_amount, receipt_date')
-                .gte('receipt_date', sixMonthsAgo.toISOString())
-                .order('receipt_date', { ascending: true });
+                .gte('receipt_date', sixMonthsAgo.toISOString());
 
             if (error) throw error;
 
-            // 월별 그룹화
-            const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-            const trendMap: Record<string, number> = {};
+            // 1. 초기 레이블 및 순번 캐싱 (O(1) - 항상 6개)
+            const trendOrder: string[] = [];
+            const trendMap: Map<string, number> = new Map();
 
-            // 최근 6개월 초기화
             for (let i = 5; i >= 0; i--) {
                 const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const label = `${d.getMonth() + 1}월`;
-                trendMap[label] = 0;
+                trendOrder.push(label);
+                trendMap.set(label, 0);
             }
 
+            // 2. 단일 루프 순회 및 문자열 슬라이싱 파싱 (Date 객체 생성 비용 제거 - O(N))
             data?.forEach(r => {
-                const d = new Date(r.receipt_date);
-                const label = `${d.getMonth() + 1}월`;
-                if (trendMap[label] !== undefined) {
-                    trendMap[label] += Number(r.total_amount);
+                // ISO 포맷 (YYYY-MM-DD...)에서 월 추출: '2024-03-05' -> '03'
+                const monthRaw = r.receipt_date.substring(5, 7);
+                const monthLabel = `${parseInt(monthRaw, 10)}월`;
+
+                if (trendMap.has(monthLabel)) {
+                    trendMap.set(monthLabel, (trendMap.get(monthLabel) || 0) + Number(r.total_amount));
                 }
             });
 
-            return Object.keys(trendMap).map(name => ({
+            // 3. 정적 순서 기반 결과 반환 (O(1))
+            return trendOrder.map(name => ({
                 name,
-                total: trendMap[name]
+                total: trendMap.get(name) || 0
             }));
         } catch (error) {
             console.error("Trend Fetch Error:", error);
