@@ -1,0 +1,1 @@
+INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', true) ON CONFLICT (id) DO UPDATE SET public = true; CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'receipts'); CREATE POLICY "Authenticated users can upload receipts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'receipts' AND auth.role() = 'authenticated');
