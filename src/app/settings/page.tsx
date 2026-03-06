@@ -19,6 +19,8 @@ import { usePlanStore } from "@/store/usePlanStore";
 import { UsageIndicator } from "@/components/dashboard/UsageIndicator";
 import { motion } from "framer-motion";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/browser';
 
 import {
     getBusinessProfile,
@@ -30,6 +32,7 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
+    const router = useRouter();
     const { plan, resetUsage } = usePlanStore();
     const [profile, setProfile] = useState<BusinessProfile>({
         businessName: '',
@@ -71,6 +74,19 @@ export default function SettingsPage() {
         }
     };
 
+    const handleLogout = async () => {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            const supabase = createClient();
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                alert('로그아웃 중 오류가 발생했습니다: ' + error.message);
+            } else {
+                router.push('/login');
+                router.refresh();
+            }
+        }
+    };
+
     if (isLoading) {
         return <div className="h-96 flex items-center justify-center">
             <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
@@ -107,7 +123,10 @@ export default function SettingsPage() {
                         </button>
                     ))}
 
-                    <button className="w-full flex items-center gap-3 p-4 rounded-2xl text-red-500 hover:bg-red-50 transition-colors mt-8">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 p-4 rounded-2xl text-red-500 hover:bg-red-50 transition-colors mt-8"
+                    >
                         <LogOut size={20} />
                         <span className="font-bold">로그아웃</span>
                     </button>
