@@ -38,23 +38,6 @@ export default function LoginPage() {
         }
     }
 
-    const handleSignUp = async () => {
-        setLoading(true)
-        setError(null)
-
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-        })
-
-        if (error) {
-            setError(error.message)
-            setLoading(false)
-        } else {
-            alert('확인 이메일을 보냈습니다. 이메일을 확인해 주세요!')
-            setLoading(false)
-        }
-    }
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden px-4">
@@ -151,7 +134,7 @@ export default function LoginPage() {
 
                         <Button
                             variant="outline"
-                            onClick={handleSignUp}
+                            onClick={() => router.push('/signup')}
                             disabled={loading}
                             className="w-full h-12 border-2 border-indigo-50 text-indigo-600 hover:bg-indigo-50 rounded-2xl font-bold transition-all"
                         >
