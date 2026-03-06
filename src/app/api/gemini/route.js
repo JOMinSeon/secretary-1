@@ -9,9 +9,9 @@ export async function POST(request) {
     try {
         // 1. 세션 확인 및 인증된 사용자인지 검증 (보안 강화)
         const supabase = await createClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (!user) {
             return NextResponse.json(
                 { error: "인증되지 않은 사용자입니다." },
                 { status: 401 }
