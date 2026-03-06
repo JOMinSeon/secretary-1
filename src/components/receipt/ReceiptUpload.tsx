@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePlanStore } from "@/store/usePlanStore";
-import { analyzeReceipt } from "@/lib/actions/receipt-actions";
+import { analyzeAndSaveReceipt } from "@/lib/actions/receipt-actions";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/browser";
 import { createReceiptService } from "@/lib/supabase/receipt-service";
@@ -74,21 +74,17 @@ export function ReceiptUpload() {
                 return;
             }
 
-            // 1. Upload to Storage
+            // 1. Upload to Storage (Storage RLS will handle safety)
             const publicUrl = await service.uploadImage(file, user.id);
 
             setStatus("analyzing");
 
-            // 2. Call AI Analysis
-            const aiData = await analyzeReceipt(preview, file.name);
-
-            // 3. Save to Database
-            const savedData = await service.saveReceipt({
-                ...aiData,
-                user_id: user.id,
-                image_url: publicUrl,
-                items: aiData.items || []
-            });
+            /** 
+             * [SECURITY FIX] 
+             * 개별 분석/저장 호출을 하나의 원자적(Atomic) 액션으로 병합하여
+             * 클라이언트 측 데이터 변조 위험(Integrity Breach) 차단.
+             */
+            const savedData = await analyzeAndSaveReceipt(preview, file.name, publicUrl);
 
             // 4. Update UI
             setResult(savedData);
@@ -96,7 +92,7 @@ export function ReceiptUpload() {
             setStatus("success");
         } catch (error) {
             const message = error instanceof Error ? error.message : '알 수 없는 오류';
-            console.error("Upload/Process flow error:", error);
+            console.error("Atomic process flow error:", error);
             setErrorMsg(message || "처리 중 오류가 발생했습니다.");
             setStatus("error");
         }

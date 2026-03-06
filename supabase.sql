@@ -136,7 +136,7 @@ ALTER TABLE public.receipts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_usage_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.organization_credits ENABLE ROW LEVEL SECURITY;
 
--- 조직 멤버만 해당 조직의 데이터를 볼 수 있는 정책 예시 (Receipts)
+-- 조직 멤버만 해당 조직의 데이터를 볼 수 있는 정책 (Receipts)
 CREATE POLICY "Members can view org receipts" ON public.receipts
 FOR SELECT USING (
     EXISTS (
@@ -151,6 +151,45 @@ FOR INSERT WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.organization_members
         WHERE org_id = public.receipts.org_id
+        AND user_id = auth.uid()
+    )
+);
+
+CREATE POLICY "Members can update org receipts" ON public.receipts
+FOR UPDATE USING (
+    EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE org_id = public.receipts.org_id
+        AND user_id = auth.uid()
+    )
+);
+
+CREATE POLICY "Members can delete org receipts" ON public.receipts
+FOR DELETE USING (
+    EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE org_id = public.receipts.org_id
+        AND user_id = auth.uid()
+    )
+);
+
+-- Profiles 정책 (자신의 프로필만 조회/수정 가능)
+CREATE POLICY "Users can view own profile" ON public.profiles
+FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON public.profiles
+FOR UPDATE USING (auth.uid() = id);
+
+-- Organization Members 정책 (자신이 속한 조직의 멤버 정보만 조회 가능)
+CREATE POLICY "Users can view their own membership" ON public.organization_members
+FOR SELECT USING (auth.uid() = user_id);
+
+-- Organization Credits 정책 (조직 멤버만 조회 가능)
+CREATE POLICY "Members can view org credits" ON public.organization_credits
+FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE org_id = public.organization_credits.org_id
         AND user_id = auth.uid()
     )
 );

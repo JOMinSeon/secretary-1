@@ -180,10 +180,14 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
      * 영수증 수정
      */
     async updateReceipt(id: string, updates: Partial<ReceiptData>) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Authentication required");
+
         const { data, error } = await supabase
             .from('receipts')
             .update(updates)
             .eq('id', id)
+            .eq('user_id', user.id) // IDOR 방지: 소유권 확인
             .select();
 
         if (error) throw error;
@@ -194,10 +198,14 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
      * 영수증 삭제
      */
     async deleteReceipt(id: string) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Authentication required");
+
         const { error } = await supabase
             .from('receipts')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('user_id', user.id); // IDOR 방지: 소유권 확인
 
         if (error) throw error;
         return true;
