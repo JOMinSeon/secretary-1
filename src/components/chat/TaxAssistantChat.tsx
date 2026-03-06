@@ -11,7 +11,8 @@ import {
     Loader2,
     Sparkles,
     Minimize2,
-    Maximize2
+    Maximize2,
+    RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +69,14 @@ export function TaxAssistantChat() {
         }
     };
 
+    const handleReset = () => {
+        if (confirm('대화 내용을 초기화하시겠습니까?')) {
+            setMessages([
+                { role: 'model', content: '안녕하세요! 사장님의 스마트 세무 비서 **TaxAI**입니다. 무엇을 도와드릴까요?' }
+            ]);
+        }
+    };
+
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
             <AnimatePresence>
@@ -105,6 +114,15 @@ export function TaxAssistantChat() {
                                 >
                                     {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
                                 </button>
+                                {!isMinimized && (
+                                    <button
+                                        onClick={handleReset}
+                                        title="대화 초기화"
+                                        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                                    >
+                                        <RotateCcw size={16} />
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setIsOpen(false)}
                                     className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"

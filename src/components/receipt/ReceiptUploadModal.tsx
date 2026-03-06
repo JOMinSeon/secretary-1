@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, Loader2, CheckCircle2, AlertCircle, X } from 'lucide-react';
-import { analyzeReceipt } from '@/lib/actions/receipt-actions';
+import { analyzeReceipt, analyzeAndSaveReceipt } from '@/lib/actions/receipt-actions';
 import { createReceiptService } from '@/lib/supabase/receipt-service';
 import { createClient } from '@/lib/supabase/browser';
 import { usePlanStore } from '@/store/usePlanStore';
@@ -63,21 +63,17 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
             setIsAnalyzing(true);
             setStatus('analyzing');
 
-            // 1. Gemini AI 영수증 분석
-            const analysis = await analyzeReceipt(preview, file.name);
-
-            // 2. Supabase 저장
             const supabase = createClient();
-            const service = createReceiptService(supabase);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("인증이 필요합니다.");
 
-            await service.saveReceipt({
-                merchant_name: analysis.merchant_name || file.name,
-                receipt_date: analysis.receipt_date || new Date().toISOString(),
-                total_amount: Number(analysis.total_amount) || 0,
-                vat_amount: Number(analysis.vat_amount) || 0,
-                category: analysis.category || 'Other',
-                is_deductible: analysis.is_deductible ?? true,
-            });
+            // 1. Supabase Storage에 이미지 업로드
+            const service = createReceiptService(supabase);
+            const imageUrl = await service.uploadImage(file, user.id);
+
+            // 2. Gemini AI 영수증 분석 및 DB 저장 (Atomic Action)
+            // analyzeAndSaveReceipt는 서버 액션이므로 클라이언트에서 호출 가능
+            await analyzeAndSaveReceipt(preview, file.name, imageUrl);
 
             // 3. 상태 업데이트
             incrementUsage();
@@ -88,8 +84,8 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
                 if (onSuccess) onSuccess();
             }, 2000);
 
-        } catch (err) {
-            const message = err instanceof Error ? err.message : '알 수 없는 오류';
+        } catch (err: any) {
+            const message = err.message || '알 수 없는 오류';
             console.error(err);
             setError(message || '영수증 분석 중 오류가 발생했습니다.');
             setStatus('error');
