@@ -33,7 +33,7 @@ import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { plan, resetUsage } = usePlanStore();
+    const { plan, setPlan, resetUsage } = usePlanStore();
     const [profile, setProfile] = useState<BusinessProfile>({
         businessName: '',
         businessNumber: '',
@@ -75,15 +75,19 @@ export default function SettingsPage() {
     };
 
     const handleLogout = async () => {
-        if (confirm('로그아웃 하시겠습니까?')) {
-            const supabase = createClient();
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                alert('로그아웃 중 오류가 발생했습니다: ' + error.message);
-            } else {
-                router.push('/login');
-                router.refresh();
-            }
+        const supabase = createClient();
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+            alert('로그아웃 중 오류가 발생했습니다: ' + error.message);
+        } else {
+            // 플랜 및 사용량 초기화
+            setPlan('FREE');
+            resetUsage();
+            
+            // 로그인 페이지로 이동 및 새로고침
+            router.push('/login');
+            router.refresh();
         }
     };
 
