@@ -70,8 +70,8 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar variant="floating" collapsible="icon" className="border-r-0">
-            <SidebarHeader className="p-6 flex flex-row items-center gap-3">
+        <Sidebar variant="floating" collapsible="icon" className="border-slate-200 shadow-sm">
+            <SidebarHeader className="p-6 flex flex-row items-center gap-3 border-b border-slate-100/50">
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
                     <Receipt className="text-white w-5 h-5" />
                 </div>
@@ -85,17 +85,17 @@ export function AppSidebar() {
                 </div>
             </SidebarHeader>
 
-            <SidebarContent className="px-4">
+            <SidebarContent className="px-4 py-4 border-b border-slate-100/50">
                 <SidebarMenu className="gap-2">
                     {navItems.map((item) => (
                         <SidebarMenuItem key={item.label}>
                             <SidebarMenuButton
                                 asChild
                                 tooltip={item.label}
-                                className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 ${
+                                className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 border ${
                                     pathname === item.href 
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
-                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                                    ? 'bg-indigo-600 text-white border-indigo-700/50 shadow-md shadow-indigo-100' 
+                                    : 'text-slate-500 border-slate-50 hover:bg-slate-50 hover:border-slate-200 hover:text-slate-900'
                                 }`}
                                 isActive={pathname === item.href}
                             >
@@ -140,7 +140,7 @@ export function AppSidebar() {
                 <div className="pt-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <SidebarMenuButton className="h-14 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 rounded-xl transition-all">
+                            <SidebarMenuButton className="h-14 hover:bg-white hover:shadow-sm border border-slate-100 hover:border-slate-200 rounded-xl transition-all">
                                 <Avatar className="h-9 w-9 rounded-lg border border-slate-200">
                                     <AvatarImage src={user?.user_metadata?.avatar_url} />
                                     <AvatarFallback className="bg-slate-100 text-indigo-600 font-bold">
