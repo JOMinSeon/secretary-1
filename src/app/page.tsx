@@ -1,10 +1,17 @@
 import React from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { PricingSection } from '@/components/PricingSection';
 
 export default function TaxAILandingPage() {
   return (
     <div className="bg-slate-50 text-slate-900 font-sans break-keep selection:bg-blue-100 min-h-screen">
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9434023098844146"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
       {/* 1. 메인 헤드라인 (Hero Section) */}
       <header className="relative bg-blue-600 text-white py-24 md:py-32 px-6 text-center overflow-hidden">
         {/* Background Decorative patterns */}
