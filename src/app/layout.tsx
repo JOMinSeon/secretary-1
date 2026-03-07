@@ -18,16 +18,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <head>
+      <body className={`${inter.className} antialiased`}>
+        <AppLayout>{children}</AppLayout>
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9434023098844146"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-      </head>
-      <body className={`${inter.className} antialiased`}>
-        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );
