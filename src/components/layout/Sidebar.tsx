@@ -71,18 +71,20 @@ export function AppSidebar() {
 
     return (
         <Sidebar variant="floating" collapsible="icon" className="border-slate-800 shadow-sm bg-slate-900">
-            <SidebarHeader className="p-6 flex flex-row items-center gap-3 border-b border-slate-800 bg-slate-900">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/20">
-                    <Receipt className="text-white w-5 h-5" />
-                </div>
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                    <span className="font-black text-lg tracking-tight text-white leading-none">
-                        axAI Secretary
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                        AI Receipt Butler
-                    </span>
-                </div>
+            <SidebarHeader className="p-6 border-b border-slate-800 bg-slate-900">
+                <Link href="/" className="flex flex-row items-center gap-3 hover:opacity-80 transition-opacity">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/20">
+                        <Receipt className="text-white w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                        <span className="font-black text-lg tracking-tight text-white leading-none">
+                            axAI Secretary
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                            AI Receipt Butler
+                        </span>
+                    </div>
+                </Link>
             </SidebarHeader>
 
             <SidebarContent className="px-4 py-4 border-b border-slate-800 bg-slate-900">
