@@ -1,6 +1,7 @@
 
+require("dotenv").config({ path: ".env.local" });
 async function findFlash() {
-    const key = "AIzaSyAFif2HmW9w_ZXBbHcN-mJlDHvHCo6iXEg";
+    const key = process.env.GEMINI_API_KEY;
     const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
     try {
         const response = await fetch(url);
