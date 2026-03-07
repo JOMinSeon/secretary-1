@@ -91,31 +91,40 @@ export default function Dashboard() {
     return (
         <div className="space-y-8 pb-12">
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden"
+                className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 md:p-10 rounded-[2rem] border border-slate-200/60 shadow-sm relative overflow-hidden group"
             >
-                <div className="relative z-10">
-                    <Badge className="mb-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-50 border-none font-semibold px-3 py-1">
-                        {plan} 멤버십 활성화됨
-                    </Badge>
-                    <h2 className="text-3xl font-bold text-slate-900 leading-tight">안녕하세요, {userName}님! 👋</h2>
-                    <p className="text-slate-500 mt-2 text-lg">오늘도 스마트하게 영수증을 관리해보세요.</p>
+                <div className="relative z-10 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Badge className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-none font-bold px-3 py-1 text-[10px] uppercase tracking-tighter">
+                            {plan} 멤버십 활성화됨
+                        </Badge>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                        안녕하세요, <span className="text-indigo-600">{userName}</span>님! 👋
+                    </h2>
+                    <p className="text-slate-500 font-medium text-lg max-w-lg">
+                        오늘도 스마트하게 영수증을 관리해보세요. <br />
+                        <span className="text-slate-400 text-sm font-normal">마지막 업데이트: {stats.lastUpdate}</span>
+                    </p>
                 </div>
                 <div className="flex gap-3 relative z-10">
                     <ReceiptUploadModal onSuccess={() => window.location.reload()} />
                 </div>
-                <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full -mr-20 -mt-20 opacity-50 blur-3xl" />
-                <div className="absolute left-1/2 bottom-0 w-32 h-32 bg-indigo-100 rounded-full opacity-30 blur-2xl" />
+                
+                {/* Modern Decorative Elements */}
+                <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-40 blur-[80px] group-hover:opacity-60 transition-opacity" />
+                <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-indigo-100/50 rounded-full -mb-24 opacity-30 blur-[60px]" />
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { title: "이번 달 총 지출", value: loading ? "---" : `₩${stats.totalExpense.toLocaleString()}`, change: "+0%", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-                    { title: "분석된 영수증", value: loading ? "---" : `${stats.receiptCount}장`, change: `${plan} 플랜`, icon: Receipt, color: "text-indigo-500", bg: "bg-indigo-50" },
-                    { title: "환급 예상액", value: loading ? "---" : `₩${stats.vatRefund.toLocaleString()}`, change: "VAT 실집계", icon: CreditCard, color: "text-amber-500", bg: "bg-amber-50" },
-                    { title: "최근 업데이트", value: stats.lastUpdate, change: "정상 작동", icon: Clock, color: "text-blue-500", bg: "bg-blue-50" },
+                    { title: "이번 달 총 지출", value: loading ? "---" : `₩${stats.totalExpense.toLocaleString()}`, change: "+0%", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", label: "지난 달 대비" },
+                    { title: "분석된 영수증", value: loading ? "---" : `${stats.receiptCount}장`, change: `${plan} 플랜`, icon: Receipt, color: "text-indigo-600", bg: "bg-indigo-50", label: "현재 사용량" },
+                    { title: "환급 예상액", value: loading ? "---" : `₩${stats.vatRefund.toLocaleString()}`, change: "VAT 실집계", icon: CreditCard, color: "text-amber-600", bg: "bg-amber-50", label: "공제 대상" },
+                    { title: "최근 업데이트", value: stats.lastUpdate, change: "정상 작동", icon: Clock, color: "text-blue-600", bg: "bg-blue-50", label: "시스템 상태" },
                 ].map((stat, i) => (
                     <motion.div
                         key={i}
@@ -123,19 +132,21 @@ export default function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: i * 0.1 }}
                     >
-                        <Card className="border-none shadow-sm hover:shadow-xl transition-all duration-300 group cursor-default">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-slate-500">{stat.title}</CardTitle>
-                                <div className={`${stat.bg} ${stat.color} p-2 rounded-xl group-hover:scale-110 transition-transform`}>
-                                    <stat.icon size={20} />
+                        <Card className="border border-slate-200/60 shadow-none hover:shadow-md hover:border-indigo-100 transition-all duration-300 group cursor-default rounded-3xl overflow-hidden bg-white">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <CardTitle className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{stat.title}</CardTitle>
+                                <div className={`${stat.bg} ${stat.color} p-2.5 rounded-2xl group-hover:rotate-6 transition-transform shadow-sm`}>
+                                    <stat.icon size={18} strokeWidth={2.5} />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
-                                <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                                    <span className={stat.color === 'text-emerald-500' ? 'text-emerald-600 font-medium' : ''}>{stat.change}</span>
-                                    {i === 0 ? '지난 달 대비' : ''}
-                                </p>
+                                <div className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</div>
+                                <div className="mt-4 flex items-center justify-between">
+                                    <Badge variant="secondary" className={`${stat.bg} ${stat.color} border-none text-[10px] font-bold px-2 py-0.5`}>
+                                        {stat.change}
+                                    </Badge>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{stat.label}</span>
+                                </div>
                             </CardContent>
                         </Card>
                     </motion.div>
@@ -149,7 +160,7 @@ export default function Dashboard() {
                     <Card className="bg-indigo-900 text-white border-none relative overflow-hidden flex flex-col justify-between p-2 shadow-xl shadow-indigo-200">
                         <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                         <CardHeader className="relative z-10">
-                            <CardTitle className="text-2xl font-bold">Smart Tax Assistant</CardTitle>
+                            <CardTitle className="text-2xl font-bold">스마트 세무 비서</CardTitle>
                             <CardDescription className="text-indigo-200 pt-2 text-sm">
                                 무제한 영수증 분석과 전문가용 엑셀 리포트 기능을 이용해 세금을 절약해보세요.
                             </CardDescription>

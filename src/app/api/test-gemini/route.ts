@@ -12,7 +12,7 @@ export async function GET() {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const result = await model.generateContent("Say 'OK' if you can read this.");
         const response = await result.response;
@@ -20,7 +20,7 @@ export async function GET() {
         return NextResponse.json({
             success: true,
             result: response.text(),
-            model: "gemini-2.0-flash"
+            model: "gemini-1.5-flash"
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : '알 수 없는 오류';

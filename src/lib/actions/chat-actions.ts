@@ -54,11 +54,34 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
             systemInstruction: systemPrompt
         });
 
+        // Gemini requires the history to:
+        // 1. Start with 'user' role
+        // 2. Alternate roles (user -> model -> user -> model)
+        // 3. End with 'model' role (if we're calling sendMessage with 'user' input)
+        
+        let validHistory: any[] = [];
+        let nextRole = 'user';
+        
+        for (const h of history) {
+            // Find the next expected role in the sequence
+            if (h.role === nextRole) {
+                validHistory.push({
+                    role: h.role,
+                    parts: [{ text: h.content }]
+                });
+                // Flip expected role
+                nextRole = nextRole === 'user' ? 'model' : 'user';
+            }
+        }
+        
+        // If history ends with 'user', we must remove it because 
+        // sendMessage(message) below will add the next 'user' message.
+        if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === 'user') {
+            validHistory.pop();
+        }
+
         const chat = modelWithInstructions.startChat({
-            history: history.map(h => ({
-                role: h.role,
-                parts: [{ text: h.content }]
-            })),
+            history: validHistory,
             generationConfig: {
                 maxOutputTokens: 1000,
             },

@@ -24,7 +24,7 @@ export async function POST(request) {
 
         // 💡 3. 방금 말씀드린 코드가 바로 여기에 들어갑니다!
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // 4. AI 모델에 질문을 던지고 답변 기다리기
         const result = await model.generateContent(prompt);

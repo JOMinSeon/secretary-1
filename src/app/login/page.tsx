@@ -76,7 +76,7 @@ export default function LoginPage() {
                                     <Input
                                         id="email"
                                         type="email"
-                                        placeholder="name@example.com"
+                                        placeholder="이메일을 입력하세요"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -128,7 +128,7 @@ export default function LoginPage() {
                                 <span className="w-full border-t border-slate-100" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white px-4 text-slate-400 font-bold tracking-widest">or</span>
+                                <span className="bg-white px-4 text-slate-400 font-bold tracking-widest">또는</span>
                             </div>
                         </div>
 

@@ -70,31 +70,40 @@ export function AppSidebar() {
     };
 
     return (
-        <Sidebar variant="floating" collapsible="icon">
-            <SidebarHeader className="p-4 flex flex-row items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+        <Sidebar variant="floating" collapsible="icon" className="border-r-0">
+            <SidebarHeader className="p-6 flex flex-row items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
                     <Receipt className="text-white w-5 h-5" />
                 </div>
-                <span className="font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">
-                    axAI Secretary
-                </span>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                    <span className="font-black text-lg tracking-tight text-slate-900 leading-none">
+                        axAI Secretary
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        AI Receipt Butler
+                    </span>
+                </div>
             </SidebarHeader>
 
-            <SidebarContent>
-                <SidebarMenu className="px-2">
+            <SidebarContent className="px-4">
+                <SidebarMenu className="gap-2">
                     {navItems.map((item) => (
                         <SidebarMenuItem key={item.label}>
                             <SidebarMenuButton
                                 asChild
                                 tooltip={item.label}
-                                className={`flex items-center gap-3 py-6 ${pathname === item.href ? 'bg-indigo-50 text-indigo-600 font-bold' : ''}`}
+                                className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 ${
+                                    pathname === item.href 
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' 
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                                }`}
                                 isActive={pathname === item.href}
                             >
                                 <Link href={item.href}>
-                                    <item.icon className="w-5 h-5" />
-                                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                                    <item.icon className={`w-5 h-5 ${pathname === item.href ? 'text-white' : ''}`} />
+                                    <span className="font-bold group-data-[collapsible=icon]:hidden">{item.label}</span>
                                     {item.premium && !isPremium && (
-                                        <Lock className="w-3 h-3 ml-auto opacity-50 group-data-[collapsible=icon]:hidden" />
+                                        <Lock className="w-3.5 h-3.5 ml-auto opacity-40 group-data-[collapsible=icon]:hidden" />
                                     )}
                                 </Link>
                             </SidebarMenuButton>
@@ -103,24 +112,26 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarContent>
 
-            <SidebarFooter className="p-4 border-t">
-                <div className="space-y-4 group-data-[collapsible=icon]:hidden mb-4">
-                    <div className="flex items-center justify-between text-xs pt-2">
-                        <span className="font-medium text-muted-foreground uppercase tracking-wider">사용량</span>
-                        <Badge variant={usagePercentage > 90 ? "destructive" : "secondary"} className="text-[10px]">
+            <SidebarFooter className="p-4 bg-slate-50/50 rounded-b-xl border-t border-slate-100">
+                <div className="space-y-4 group-data-[collapsible=icon]:hidden mb-6 px-2">
+                    <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <span>Usage Limits</span>
+                        <Badge variant={usagePercentage > 90 ? "destructive" : "secondary"} className="text-[9px] px-1.5 h-4 font-bold border-none">
                             {plan}
                         </Badge>
                     </div>
-                    <Progress value={usagePercentage} className="h-1.5" />
-                    <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span>{usageCount} / {maxLimit === Infinity ? "∞" : maxLimit} 장</span>
-                        <span className="font-bold">{Math.round(usagePercentage)}%</span>
+                    <div className="space-y-2">
+                        <Progress value={usagePercentage} className="h-1.5 bg-slate-200" />
+                        <div className="flex justify-between text-[10px] text-slate-500 font-bold">
+                            <span>{usageCount} / {maxLimit === Infinity ? "∞" : maxLimit}</span>
+                            <span>{Math.round(usagePercentage)}%</span>
+                        </div>
                     </div>
                     {!isPremium && (
                         <Link href="/pricing" className="block w-full">
-                            <button className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-md text-xs font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
-                                <Zap className="w-3 h-3 fill-current" />
-                                업그레이드
+                            <button className="w-full mt-2 py-2.5 px-3 bg-slate-900 text-white rounded-xl text-[11px] font-black flex items-center justify-center gap-2 shadow-sm hover:bg-slate-800 transition-all active:scale-95">
+                                <Zap className="w-3.5 h-3.5 fill-indigo-400 text-indigo-400" />
+                                UPGRADE PLAN
                             </button>
                         </Link>
                     )}
@@ -129,16 +140,16 @@ export function AppSidebar() {
                 <div className="pt-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <SidebarMenuButton className="h-12 hover:bg-slate-100 transition-colors">
-                                <Avatar className="h-8 w-8 rounded-lg">
+                            <SidebarMenuButton className="h-14 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 rounded-xl transition-all">
+                                <Avatar className="h-9 w-9 rounded-lg border border-slate-200">
                                     <AvatarImage src={user?.user_metadata?.avatar_url} />
-                                    <AvatarFallback className="bg-indigo-100 text-indigo-600 font-bold">
+                                    <AvatarFallback className="bg-slate-100 text-indigo-600 font-bold">
                                         {user?.email?.substring(0, 2).toUpperCase() || <User size={16} />}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                                    <span className="truncate font-semibold">{user?.email?.split('@')[0]}</span>
-                                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden ml-1">
+                                    <span className="truncate font-bold text-slate-900">{user?.email?.split('@')[0]}</span>
+                                    <span className="truncate text-[10px] text-slate-400 font-medium">{user?.email}</span>
                                 </div>
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
@@ -156,7 +167,7 @@ export function AppSidebar() {
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-semibold">User Profile</span>
+                                        <span className="truncate font-semibold">사용자 프로필</span>
                                         <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                                     </div>
                                 </div>

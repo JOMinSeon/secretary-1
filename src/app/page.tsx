@@ -120,7 +120,7 @@ export default function TaxAILandingPage() {
             {/* 프로 플랜 */}
             <div className="bg-blue-600 border-4 border-blue-500 p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl shadow-blue-200 relative transform md:scale-105 z-20 overflow-hidden">
               <div className="absolute top-5 right-[-35px] rotate-45 bg-yellow-400 text-yellow-900 text-xs font-black px-12 py-1 shadow-sm">
-                POPULAR
+                인기 플랜
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">프로 (Pro)</h3>
               <p className="text-blue-100 mb-8">성장하는 사업자를 위한 완벽 관리</p>
@@ -160,7 +160,7 @@ export default function TaxAILandingPage() {
       </section>
 
       <footer className="py-12 bg-slate-50 text-center border-t border-slate-200">
-        <p className="text-slate-400">© 2024 TaxAI Secretary. All rights reserved.</p>
+        <p className="text-slate-400">© 2026 axAI Secretary. All rights reserved.</p>
       </footer>
     </div>
   );
