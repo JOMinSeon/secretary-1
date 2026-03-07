@@ -37,10 +37,11 @@ export default function Dashboard() {
     const [userName, setUserName] = useState("사장님");
 
     const router = useRouter();
-    const supabase = createClient();
-    const service = createReceiptService(supabase);
 
     useEffect(() => {
+        const supabase = createClient();
+        const service = createReceiptService(supabase);
+
         const fetchDashboardData = async () => {
             try {
                 // 1. 세션 확인
@@ -87,7 +88,7 @@ export default function Dashboard() {
         };
 
         fetchDashboardData();
-    }, [supabase, service, router, setUsageCount]);
+    }, [router, setUsageCount]);
 
     return (
         <div className="space-y-8 pb-12">

@@ -3,10 +3,18 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-    // 1. Supabase Session Update & Base Auth Check
+    const { pathname } = request.nextUrl;
+
+    // API 라우트와 Server Actions은 미들웨어 인증 체크에서 제외
+    if (pathname.startsWith('/api/')) {
+        return NextResponse.next();
+    }
+
+    // 1. Supabase Session Update (쿠키 갱신 포함)
     const response = await updateSession(request)
 
-    // [보안 강화] 서버 사이드 세션 검증
+    // getUser()는 토큰의 유효성을 서버에서 실제 검증하므로 안전함
+    // updateSession에서 반환한 response의 쿠키를 활용
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,9 +27,7 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // getUser()는 토큰의 유효성을 서버에서 실제 검증하므로 안전함
     const { data: { user } } = await supabase.auth.getUser();
-    const { pathname } = request.nextUrl;
 
     // A. 로그인한 사용자가 인증 페이지(/login, /signup) 접근 시 대시보드로 리다이렉트
     if (user && (pathname === '/login' || pathname === '/signup')) {
