@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { PricingSection } from '@/components/PricingSection';
 
 export default function TaxAILandingPage() {
   return (
@@ -92,55 +93,7 @@ export default function TaxAILandingPage() {
       </section>
 
       {/* 4. 가격 정책 (Pricing Section) */}
-      <section className="py-24 px-6 bg-white overflow-hidden relative">
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-slate-900 leading-tight">
-            세무사 기장료의 1/10 가격으로<br />
-            <span className="text-blue-600">최고의 AI 세무팀을 고용하세요.</span>
-          </h2>
-
-          <div className="flex flex-col md:flex-row justify-center items-center gap-8 mt-12">
-            {/* 베이직 플랜 */}
-            <div className="bg-white border border-slate-200 p-10 rounded-[2.5rem] w-full max-w-md hover:shadow-2xl transition-all duration-500 group">
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">베이직 (Basic)</h3>
-              <p className="text-slate-500 mb-8">나홀로 사장님을 위한 실속형</p>
-              <div className="text-5xl font-black text-slate-900 mb-8 flex items-baseline justify-center">
-                9,900<span className="text-lg font-medium text-slate-400 ml-1">원 / 월</span>
-              </div>
-              <ul className="text-left space-y-4 mb-10">
-                <PricingDetail text="자동 영수증 분석 50건" />
-                <PricingDetail text="실시간 AI 세무 상담" />
-                <PricingDetail text="분기별 세무 리포트" />
-              </ul>
-              <button className="w-full bg-slate-100 text-slate-700 font-bold py-4 rounded-2xl hover:bg-slate-200 transition-colors">
-                선택하기
-              </button>
-            </div>
-
-            {/* 프로 플랜 */}
-            <div className="bg-blue-600 border-4 border-blue-500 p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl shadow-blue-200 relative transform md:scale-105 z-20 overflow-hidden">
-              <div className="absolute top-5 right-[-35px] rotate-45 bg-yellow-400 text-yellow-900 text-xs font-black px-12 py-1 shadow-sm">
-                인기 플랜
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">프로 (Pro)</h3>
-              <p className="text-blue-100 mb-8">성장하는 사업자를 위한 완벽 관리</p>
-              <div className="text-5xl font-black text-white mb-4 flex items-baseline justify-center">
-                29,000<span className="text-lg font-medium text-blue-200 ml-1">원 / 월</span>
-              </div>
-              <p className="text-blue-200 mb-8 text-sm">* 4대 보험 및 원천세 관리 포함</p>
-              <ul className="text-left space-y-4 mb-10">
-                <PricingDetail text="영수증 분석 무제한" isWhite />
-                <PricingDetail text="정밀 환급 분석 서비스" isWhite />
-                <PricingDetail text="우선 순위 AI 지원" isWhite />
-                <PricingDetail text="직원 근태 및 급여 관리" isWhite />
-              </ul>
-              <button className="w-full bg-white text-blue-600 font-bold py-4 rounded-2xl hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all shadow-lg">
-                가장 인기 있는 선택
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* 5. 최종 행동 유도 (CTA Section) */}
       <section className="py-24 px-6 bg-slate-900 text-center relative overflow-hidden">
@@ -197,13 +150,3 @@ function FeatureCard({ icon, title, description }: { icon: string; title: string
   );
 }
 
-function PricingDetail({ text, isWhite }: { text: string; isWhite?: boolean }) {
-  return (
-    <li className={`flex items-center gap-2 ${isWhite ? 'text-blue-100' : 'text-slate-600'}`}>
-      <svg className={`w-5 h-5 flex-shrink-0 ${isWhite ? 'text-blue-200' : 'text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-      </svg>
-      <span className="text-sm font-medium">{text}</span>
-    </li>
-  );
-}
