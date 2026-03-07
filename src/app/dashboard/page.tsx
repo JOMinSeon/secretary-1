@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AnimatedList } from "@/components/ui/animated-list";
 import {
     Receipt,
     TrendingUp,
@@ -203,39 +204,42 @@ export default function Dashboard() {
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="divide-y divide-slate-100">
+                    <CardContent className="p-0 overflow-hidden">
+                        <div className="relative flex h-[400px] w-full flex-col p-6 overflow-hidden">
                             {loading ? (
                                 <div className="p-12 text-center text-slate-400">데이터를 불러오는 중...</div>
                             ) : recentReceipts.length > 0 ? (
-                                recentReceipts.map((item) => (
-                                    <div key={item.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                                                {item.image_url ? (
-                                                    <img src={item.image_url} alt="Receipt" className="w-full h-full object-cover opacity-80" />
-                                                ) : (
-                                                    <Receipt className="text-indigo-400" size={24} />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-slate-900 text-lg">{item.merchant_name}</div>
-                                                <div className="text-sm text-slate-400">
-                                                    {item.receipt_date ? format(new Date(item.receipt_date), 'yyyy.MM.dd | HH:mm') : '-'}
+                                <AnimatedList delay={2000}>
+                                    {recentReceipts.map((item) => (
+                                        <div key={item.id} className="w-full flex items-center justify-between p-4 bg-white border border-slate-100/80 rounded-2xl shadow-sm hover:border-indigo-100 transition-all group cursor-pointer">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                                                    {item.image_url ? (
+                                                        <img src={item.image_url} alt="Receipt" className="w-full h-full object-cover opacity-80" />
+                                                    ) : (
+                                                        <Receipt className="text-indigo-400" size={20} />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-slate-900">{item.merchant_name}</div>
+                                                    <div className="text-xs text-slate-400">
+                                                        {item.receipt_date ? format(new Date(item.receipt_date), 'yyyy.MM.dd | HH:mm') : '-'}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <div className="text-right">
+                                                <div className="font-black text-slate-900">₩{item.total_amount?.toLocaleString()}</div>
+                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-none px-2 mt-1 text-[10px]">
+                                                    {item.category}
+                                                </Badge>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="font-black text-slate-900 text-lg">₩{item.total_amount?.toLocaleString()}</div>
-                                            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-none px-2 mt-1">
-                                                {item.category}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </AnimatedList>
                             ) : (
                                 <div className="p-12 text-center text-slate-400">최근 영수증 내역이 없습니다.</div>
                             )}
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white to-transparent"></div>
                         </div>
                     </CardContent>
                 </Card>
