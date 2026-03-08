@@ -45,14 +45,13 @@ export function UsageIndicator() {
         <CardContent>
           <div className="space-y-4">
             <div className="relative pt-1">
-              <Progress value={Math.min(percentage, 100)} className="h-2 bg-slate-100" />
-              {/* Dynamic color for progress indicator */}
-              <style dangerouslySetInnerHTML={{ __html: `
-                [role="progressbar"] > div {
-                  background-color: ${percentage >= 90 ? '#f43f5e' : percentage >= 70 ? '#f59e0b' : '#4f46e5'} !important;
-                  transition: background-color 0.5s ease;
-                }
-              `}} />
+              <div style={{ '--progress-color': percentage >= 90 ? '#f43f5e' : percentage >= 70 ? '#f59e0b' : '#4f46e5' } as React.CSSProperties}>
+                <Progress
+                  value={Math.min(percentage, 100)}
+                  className="h-2 bg-slate-100 [&>div]:transition-colors [&>div]:duration-500"
+                  style={{ '--progress-fill': percentage >= 90 ? '#f43f5e' : percentage >= 70 ? '#f59e0b' : '#4f46e5' } as React.CSSProperties}
+                />
+              </div>
             </div>
             
             <div className="flex items-center justify-between text-xs text-slate-500">

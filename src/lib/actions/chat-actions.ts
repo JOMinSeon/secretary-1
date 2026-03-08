@@ -12,6 +12,15 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
         throw new Error("GEMINI_API_KEY is not configured.");
     }
 
+    // [SECURITY] 입력 길이 제한 — 과도한 토큰 소비 및 Prompt Injection 완화
+    const MAX_MESSAGE_LENGTH = 2000;
+    if (!message || message.trim().length === 0) {
+        throw new Error("메시지를 입력해 주세요.");
+    }
+    if (message.length > MAX_MESSAGE_LENGTH) {
+        throw new Error(`메시지가 너무 깁니다 (최대 ${MAX_MESSAGE_LENGTH}자).`);
+    }
+
     try {
         const supabase = await createClient();
         const service = createReceiptService(supabase);
@@ -58,10 +67,10 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
         // 1. Start with 'user' role
         // 2. Alternate roles (user -> model -> user -> model)
         // 3. End with 'model' role (if we're calling sendMessage with 'user' input)
-        
-        let validHistory: any[] = [];
+
+        const validHistory: { role: string; parts: { text: string }[] }[] = [];
         let nextRole = 'user';
-        
+
         for (const h of history) {
             // Find the next expected role in the sequence
             if (h.role === nextRole) {
@@ -73,7 +82,7 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
                 nextRole = nextRole === 'user' ? 'model' : 'user';
             }
         }
-        
+
         // If history ends with 'user', we must remove it because 
         // sendMessage(message) below will add the next 'user' message.
         if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === 'user') {
@@ -92,8 +101,8 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
         return response.text();
 
     } catch (error) {
-        const message = error instanceof Error ? error.message : '알 수 없는 오류';
+        const errMessage = error instanceof Error ? error.message : '알 수 없는 오류';
         console.error("Chat Action Error:", error);
-        throw new Error(message || "AI 비서와 연결하는 중 오류가 발생했습니다.");
+        throw new Error(errMessage || "AI 비서와 연결하는 중 오류가 발생했습니다.");
     }
 }

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         const plan = session.metadata?.plan;
 
         if (userId && plan) {
-            console.log(`Payment success for User: ${userId}, Plan: ${plan}`);
+            // [SECURITY] userId 등 개인 식별 정보는 로그에 기록하지 않음
 
             // 사용자 프로필 및 조직 정보 업데이트
             // 1-1. 사용자 프로필 업데이트 (PREMIUM/PRO 멤버십 표기용)

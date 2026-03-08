@@ -33,9 +33,10 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
      */
     async getReceipts() {
         try {
+            // [SECURITY] select('*') 대신 필요한 컬럼만 명시하여 민감 정보 과잉 노출 방지
             const { data, error } = await supabase
                 .from('receipts')
-                .select('*')
+                .select('id, merchant_name, receipt_date, total_amount, vat_amount, category, is_deductible, tax_tip, status, image_url, items, business_number')
                 .order('receipt_date', { ascending: false });
 
             if (error) throw error;
@@ -86,7 +87,20 @@ export const createReceiptService = (supabase: SupabaseClient) => ({
      * 영수증 이미지 업로드
      */
     async uploadImage(file: File, userId: string) {
-        const fileExt = file.name.split('.').pop();
+        // [SECURITY] 허용된 이미지 확장자만 통과 (화이트리스트 검증)
+        const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'pdf'];
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+
+        if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+            throw new Error(`허용되지 않는 파일 형식입니다. (허용: ${ALLOWED_EXTENSIONS.join(', ')})`);
+        }
+
+        // [SECURITY] 파일 크기 제한 (10MB)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            throw new Error('파일 크기가 너무 큽니다 (최대 10MB).');
+        }
+
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
         const filePath = `receipts/${fileName}`;
 
