@@ -5,7 +5,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
     if (process.env.NODE_ENV === 'production') {
-        throw new Error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing in production.');
+        console.warn('WARNING: SUPABASE_SERVICE_ROLE_KEY or URL is missing. Admin client may fail at runtime.');
     }
 }
 
@@ -15,9 +15,13 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
  * - 오직 서버 측(Webhooks, Server-only jobs)에서만 사용해야 합니다.
  * - 일반적인 Server Action이나 Client Component에서 절대 사용하지 마세요.
  */
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-    },
-});
+export const supabaseAdmin = createClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseServiceRoleKey || 'placeholder_key',
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    }
+);
