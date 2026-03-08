@@ -24,21 +24,21 @@ import { createClient } from '@/lib/supabase/browser';
 
 const planDetails = {
     PREMIUM: {
-        price: '$19.00',
+        price: '₩30,000',
         icon: Zap,
         color: 'text-indigo-600',
         bg: 'bg-indigo-50',
         desc: 'Best for growing businesses'
     },
     PRO: {
-        price: '$49.00',
+        price: '₩100,000',
         icon: Crown,
         color: 'text-violet-600',
         bg: 'bg-violet-50',
         desc: 'Unlimited power for professionals'
     },
     FREE: {
-        price: '$0.00',
+        price: '₩0',
         icon: ShieldCheck,
         color: 'text-slate-600',
         bg: 'bg-slate-50',

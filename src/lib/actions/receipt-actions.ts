@@ -150,3 +150,69 @@ export async function analyzeReceipt(base64Image: string, fileName: string) {
         throw new Error(`분석 중 오류 발생: ${error.message || "알 수 없는 이유"}`);
     }
 }
+
+/**
+ * [AI BULK EXPENSE CLASSIFICATION & SAVE]
+ * 엑셀 등에서 파싱된 대량의 지출 내역을 한꺼번에 분류하고 DB에 저장합니다.
+ */
+export async function bulkClassifyAndSaveExpenses(expenses: { merchant_name: string; total_amount: number; receipt_date: string; vat_amount?: number }[]) {
+    if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is missing");
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("인증이 필요합니다.");
+
+    // AI에 전달할 데이터 최소화 (프롬프트 토큰 절약)
+    const inputForAI = expenses.map((e, idx) => ({
+        idx,
+        merchant: e.merchant_name,
+        amount: e.total_amount
+    }));
+
+    const prompt = `
+    당신은 한국의 세무 전문가 AI입니다. 아래 지출 내역을 분석하여 카테고리, 공제여부, 절세팁을 JSON 배열로 반환하세요.
+    
+    분석 기준:
+    - category: [식대, 비품, 여비교통비, 접대비, 소모품비, 기타] 중 하나.
+    - is_deductible: 사업 경비 공제 가능성 (true/false).
+    - tax_tip: 해당 지출에 대한 짧은 절세 조언 (한글 1문장).
+    
+    입력 데이터: ${JSON.stringify(inputForAI)}
+    
+    출력 형식: 반드시 [{ idx, category, is_deductible, tax_tip }, ...] 형식의 JSON만 반환하세요.
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("AI 분류 응답 분석 실패");
+
+        const aiResults = JSON.parse(jsonMatch[0]);
+        const receiptService = createReceiptService(supabase);
+
+        // 분류 결과와 원본 데이터를 매핑하여 DB 저장
+        const savePromises = expenses.map(async (exp, idx) => {
+            const aiRes = aiResults.find((r: any) => r.idx === idx);
+            return receiptService.saveReceipt({
+                merchant_name: exp.merchant_name,
+                receipt_date: exp.receipt_date,
+                total_amount: exp.total_amount,
+                vat_amount: exp.vat_amount || 0,
+                category: aiRes?.category || '기타',
+                is_deductible: aiRes?.is_deductible ?? true,
+                tax_tip: aiRes?.tax_tip || '사업 관련 지출 증빙을 보관하세요.',
+                status: 'completed',
+                user_id: user.id
+            });
+        });
+
+        const savedData = await Promise.all(savePromises);
+        return savedData;
+    } catch (error: any) {
+        console.error("Bulk Classification Error:", error);
+        throw new Error(error.message || "대량 분류 중 오류가 발생했습니다.");
+    }
+}

@@ -20,7 +20,7 @@ const plans = [
     },
     {
         name: 'PREMIUM' as PlanType,
-        price: '₩19,000',
+        price: '₩30,000',
         description: '성장하는 비즈니스를 위해',
         features: ['월 100회 영수증 분석', '상세 지출 리포트', '엑셀 데이터 내보내기', '우선 순위 AI 지원'],
         icon: Zap,
@@ -30,7 +30,7 @@ const plans = [
     },
     {
         name: 'PRO' as PlanType,
-        price: '₩49,000',
+        price: '₩100,000',
         description: '전문적인 세무 관리가 필요한 기업',
         features: ['무제한 영수증 분석', '세무사 전송 전용 리포트', '모든 프리미엄 기능', '1:1 전담 서포트'],
         icon: Crown,

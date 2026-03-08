@@ -34,12 +34,12 @@ export async function createCheckoutSession(plan: PlanType) {
             line_items: [
                 {
                     price_data: {
-                        currency: 'usd',
+                        currency: 'krw',
                         product_data: {
                             name: `axAI Secretary ${plan} Subscription`,
                             description: plan === 'PREMIUM' ? 'Monthly Premium Membership' : 'Monthly Pro Membership',
                         },
-                        unit_amount: plan === 'PREMIUM' ? 1900 : 4900, // $19.00 or $49.00
+                        unit_amount: plan === 'PREMIUM' ? 30000 : 100000, // 30,000원 or 100,000원
                         recurring: {
                             interval: 'month',
                         },

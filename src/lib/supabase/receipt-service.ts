@@ -10,6 +10,8 @@ export interface ReceiptData {
     vat_amount: number;
     category: string;
     is_deductible: boolean;
+    tax_tip?: string;
+    status?: 'pending' | 'completed';
     image_url?: string;
     items?: Record<string, unknown>;
     business_number?: string;
