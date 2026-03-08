@@ -4,11 +4,11 @@ import { PricingSection } from '@/components/PricingSection';
 
 export default function TaxAILandingPage() {
   return (
-    <div className="bg-slate-50 text-slate-900 font-sans break-keep selection:bg-blue-100 min-h-screen">
+    <main className="bg-slate-50 text-slate-900 font-sans break-keep selection:bg-blue-100 min-h-screen">
       {/* 1. 메인 헤드라인 (Hero Section) */}
       <header className="relative bg-blue-600 text-white py-24 md:py-32 px-6 text-center overflow-hidden">
         {/* Background Decorative patterns */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" aria-hidden="true">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400 rounded-full blur-[120px]" />
         </div>
@@ -17,9 +17,9 @@ export default function TaxAILandingPage() {
           <Badge text="소상공인 전담 AI 세무 비서" />
           <h1 className="text-4xl md:text-6xl font-extrabold mb-8 leading-tight tracking-tight">
             사장님은 장사만 하세요.<br />
-            <span className="text-blue-200">세금은 AI가 알아서 합니다.</span>
+            <span className="text-white">세금은 AI가 알아서 합니다.</span>
           </h1>
-          <p className="text-xl md:text-2xl mb-10 font-light text-blue-100 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl mb-10 font-light text-white max-w-2xl mx-auto leading-relaxed">
             매달 나가는 세무 대리 비용은 줄이고, 누락되는 공제 혜택은 AI가 찾아냅니다.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -102,28 +102,28 @@ export default function TaxAILandingPage() {
         <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 via-transparent to-transparent" />
         <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-10 text-white leading-tight">
-            &quot;오늘 가입하면 이번 분기 부가세 신고는 <span className="text-blue-400">0원!</span>&quot;
+            &quot;오늘 가입하면 이번 분기 부가세 신고는 <span className="text-blue-300">0원!</span>&quot;
           </h2>
-          <p className="text-slate-400 text-xl mb-12">선착순 100분께만 드리는 한정 혜택을 놓치지 마세요.</p>
+          <p className="text-slate-300 text-xl mb-12">선착순 100분께만 드리는 한정 혜택을 놓치지 마세요.</p>
           <Link href="/dashboard">
             <button className="bg-blue-600 text-white font-black py-5 px-14 rounded-full shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all duration-300 text-2xl">
               지금 바로 무료로 시작하기
             </button>
           </Link>
-          <p className="text-slate-500 mt-8 text-sm">카드 등록 없이도 바로 시작할 수 있습니다.</p>
+          <p className="text-slate-400 mt-8 text-sm">카드 등록 없이도 바로 시작할 수 있습니다.</p>
         </div>
       </section>
 
       <footer className="py-12 bg-slate-50 text-center border-t border-slate-200">
-        <p className="text-slate-400">© 2026 axAI Secretary. All rights reserved.</p>
+        <p className="text-slate-600">© 2026 axAI Secretary. All rights reserved.</p>
       </footer>
-    </div>
+    </main>
   );
 }
 
 function Badge({ text }: { text: string }) {
   return (
-    <span className="inline-block bg-blue-500/30 backdrop-blur-sm text-blue-100 text-sm font-bold px-4 py-1.5 rounded-full mb-6 border border-blue-400/30">
+    <span className="inline-block bg-blue-500/40 backdrop-blur-sm text-white text-sm font-bold px-4 py-1.5 rounded-full mb-6 border border-blue-300/50">
       {text}
     </span>
   );
@@ -131,8 +131,8 @@ function Badge({ text }: { text: string }) {
 
 function ProblemCard({ emoji, text }: { emoji: string; text: string }) {
   return (
-    <div className="bg-slate-50 p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-300 hover:shadow-md hover:translate-y-[-4px]">
-      <span className="text-4xl mb-6">{emoji}</span>
+    <div className="bg-slate-50 p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center transition-all duration-300 hover:shadow-md hover:translate-y-[-4px]" role="article">
+      <span className="text-4xl mb-6" aria-hidden="true">{emoji}</span>
       <p className="text-lg font-medium text-slate-700 leading-relaxed">
         {text}
       </p>
@@ -142,13 +142,13 @@ function ProblemCard({ emoji, text }: { emoji: string; text: string }) {
 
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
-    <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-300 group">
-      <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300 w-fit">{icon}</div>
+    <article className="bg-white p-10 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all duration-300 group">
+      <div className="text-5xl mb-6 transform group-hover:scale-110 transition-transform duration-300 w-fit" aria-hidden="true">{icon}</div>
       <h3 className="text-2xl font-bold mb-4 text-slate-900">{title}</h3>
-      <p className="text-slate-500 leading-relaxed text-lg">
+      <p className="text-slate-600 leading-relaxed text-lg">
         {description}
       </p>
-    </div>
+    </article>
   );
 }
 
