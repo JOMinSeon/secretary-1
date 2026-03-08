@@ -28,9 +28,11 @@ export default function TaxAILandingPage() {
                 지금 바로 시작하기
               </button>
             </Link>
-            <button className="w-full sm:w-auto bg-blue-700 text-white font-semibold py-4 px-10 rounded-2xl border border-blue-500 hover:bg-blue-800 transition-all duration-300 text-xl">
-              서비스 둘러보기
-            </button>
+            <Link href="/dashboard">
+              <button className="w-full sm:w-auto bg-blue-700 text-white font-semibold py-4 px-10 rounded-2xl border border-blue-500 hover:bg-blue-800 transition-all duration-300 text-xl">
+                서비스 둘러보기
+              </button>
+            </Link>
           </div>
         </div>
       </header>

@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // @ts-ignore
+    allowedDevOrigins: ['192.168.0.12', 'localhost:3000'],
+  },
   async headers() {
     return [
       {

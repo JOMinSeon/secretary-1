@@ -50,18 +50,26 @@ const navItems = [
 
 export function AppSidebar() {
     const { plan, usageCount, maxLimit, usagePercentage, isPremium } = useSubscription();
+    const [mounted, setMounted] = React.useState(false);
     const pathname = usePathname();
     const [user, setUser] = React.useState<{ email?: string; user_metadata?: { avatar_url?: string } } | null>(null);
     const supabase = createClient();
     const router = useRouter();
 
     React.useEffect(() => {
+        setMounted(true);
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
         };
         getUser();
     }, [supabase]);
+
+    const displayPlan = mounted ? plan : 'FREE';
+    const displayUsageCount = mounted ? usageCount : 0;
+    const displayMaxLimit = mounted ? maxLimit : 10;
+    const displayUsagePercentage = mounted ? usagePercentage : 0;
+    const displayIsPremium = mounted ? isPremium : false;
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -94,17 +102,16 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 tooltip={item.label}
-                                className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 border ${
-                                    pathname === item.href 
-                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-900/20' 
+                                className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 border ${pathname === item.href
+                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-900/20'
                                     : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-white'
-                                }`}
+                                    }`}
                                 isActive={pathname === item.href}
                             >
                                 <Link href={item.href}>
                                     <item.icon className={`w-5 h-5 ${pathname === item.href ? 'text-white' : 'text-slate-400'}`} />
                                     <span className="font-bold group-data-[collapsible=icon]:hidden">{item.label}</span>
-                                    {item.premium && !isPremium && (
+                                    {item.premium && !displayIsPremium && (
                                         <Lock className="w-3.5 h-3.5 ml-auto opacity-40 group-data-[collapsible=icon]:hidden" />
                                     )}
                                 </Link>
@@ -118,18 +125,18 @@ export function AppSidebar() {
                 <div className="space-y-4 group-data-[collapsible=icon]:hidden mb-6 px-2">
                     <div className="flex items-center justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
                         <span>Usage Limits</span>
-                        <Badge variant={usagePercentage > 90 ? "destructive" : "secondary"} className="text-[9px] px-1.5 h-4 font-bold border-none bg-slate-800 text-slate-300">
-                            {plan}
+                        <Badge variant={displayUsagePercentage > 90 ? "destructive" : "secondary"} className="text-[9px] px-1.5 h-4 font-bold border-none bg-slate-800 text-slate-300">
+                            {displayPlan}
                         </Badge>
                     </div>
                     <div className="space-y-2">
-                        <Progress value={usagePercentage} className="h-1.5 bg-slate-800" />
+                        <Progress value={displayUsagePercentage} className="h-1.5 bg-slate-800" />
                         <div className="flex justify-between text-[10px] text-slate-500 font-bold">
-                            <span>{usageCount} / {maxLimit === Infinity ? "∞" : maxLimit}</span>
-                            <span>{Math.round(usagePercentage)}%</span>
+                            <span>{displayUsageCount} / {displayMaxLimit === Infinity ? "∞" : displayMaxLimit}</span>
+                            <span>{Math.round(displayUsagePercentage)}%</span>
                         </div>
                     </div>
-                    {!isPremium && (
+                    {!displayIsPremium && (
                         <Link href="/pricing" className="block w-full">
                             <button className="w-full mt-2 py-2.5 px-3 bg-indigo-600 text-white rounded-xl text-[11px] font-black flex items-center justify-center gap-2 shadow-sm hover:bg-indigo-500 transition-all active:scale-95">
                                 <Zap className="w-3.5 h-3.5 fill-white/20 text-white" />
