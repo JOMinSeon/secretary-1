@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createReceiptService } from "@/lib/supabase/receipt-service";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function askTaxAssistant(message: string, history: { role: 'user' | 'model', content: string }[]) {
     if (!process.env.GEMINI_API_KEY) {
@@ -59,7 +59,7 @@ export async function askTaxAssistant(message: string, history: { role: 'user' |
         `;
 
         const modelWithInstructions = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             systemInstruction: systemPrompt
         });
 
