@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, Loader2, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { Plus, Upload, Loader2, CheckCircle2, AlertCircle, X, Camera } from 'lucide-react';
 import { analyzeReceipt, analyzeAndSaveReceipt } from '@/lib/actions/receipt-actions';
 import { createReceiptService } from '@/lib/supabase/receipt-service';
 import { createClient } from '@/lib/supabase/browser';
@@ -25,6 +25,7 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
     const [error, setError] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
     const { incrementUsage, usageCount, maxLimit } = usePlanStore();
 
     const handleOpen = () => {
@@ -136,25 +137,48 @@ export function ReceiptUploadModal({ onSuccess }: ReceiptUploadModalProps) {
                                     )}
                                 </div>
 
-                                {status === 'idle' && (
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-indigo-100 rounded-[24px] p-10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all bg-slate-50/50 group"
-                                    >
-                                        <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Upload className="text-indigo-500" size={32} />
+                                {status === 'idle' && !file && (
+                                    <div className="flex flex-col gap-4">
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="border-2 border-dashed border-indigo-100 rounded-[24px] p-10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all bg-slate-50/50 group"
+                                        >
+                                            <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Upload className="text-indigo-500" size={32} />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="font-bold text-slate-900">클릭하여 이미지 업로드</p>
+                                                <p className="text-sm text-slate-400 mt-1">JPEG, PNG 형식의 이미지를 선택하세요</p>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                accept="image/*"
+                                            />
                                         </div>
-                                        <div className="text-center">
-                                            <p className="font-bold text-slate-900">클릭하여 이미지 업로드</p>
-                                            <p className="text-sm text-slate-400 mt-1">JPEG, PNG 형식의 이미지를 선택하세요</p>
+
+                                        <div
+                                            onClick={() => cameraInputRef.current?.click()}
+                                            className="md:hidden border-2 border-dashed border-indigo-100 rounded-[24px] p-10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all bg-slate-50/50 group"
+                                        >
+                                            <div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Camera className="text-indigo-500" size={32} />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="font-bold text-slate-900">사진 찍기</p>
+                                                <p className="text-sm text-slate-400 mt-1">카메라 바로 실행</p>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                ref={cameraInputRef}
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                accept="image/*"
+                                                capture="environment"
+                                            />
                                         </div>
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                            accept="image/*"
-                                        />
                                     </div>
                                 )}
 
