@@ -32,9 +32,9 @@ const GUEST_STATS = {
 };
 
 const GUEST_RECEIPTS: ReceiptData[] = [
-    { id: "demo-1", merchant_name: "스타벅스 강남점", total_amount: 15000, vat_amount: 1364, receipt_date: "2026-03-08T10:30:00", category: "식비", image_url: null } as ReceiptData,
-    { id: "demo-2", merchant_name: "GS25 편의점", total_amount: 8500, vat_amount: 773, receipt_date: "2026-03-07T14:20:00", category: "소모품", image_url: null } as ReceiptData,
-    { id: "demo-3", merchant_name: "교보문고", total_amount: 32000, vat_amount: 2909, receipt_date: "2026-03-06T16:00:00", category: "도서", image_url: null } as ReceiptData,
+    { id: "demo-1", merchant_name: "스타벅스 강남점", total_amount: 15000, vat_amount: 1364, receipt_date: "2026-03-08T10:30:00", category: "식비", is_deductible: false },
+    { id: "demo-2", merchant_name: "GS25 편의점", total_amount: 8500, vat_amount: 773, receipt_date: "2026-03-07T14:20:00", category: "소모품", is_deductible: true },
+    { id: "demo-3", merchant_name: "교보문고", total_amount: 32000, vat_amount: 2909, receipt_date: "2026-03-06T16:00:00", category: "도서", is_deductible: true },
 ];
 
 export default function Dashboard() {
@@ -151,7 +151,7 @@ export default function Dashboard() {
                 <div className="flex gap-3 relative z-10">
                     <ReceiptUploadModal onSuccess={() => window.location.reload()} />
                 </div>
-                
+
                 {/* Modern Decorative Elements */}
                 <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-40 blur-[80px] group-hover:opacity-60 transition-opacity" />
                 <div className="absolute left-1/4 bottom-0 w-48 h-48 bg-indigo-100/50 rounded-full -mb-24 opacity-30 blur-[60px]" />
