@@ -140,6 +140,15 @@ export default function LoginPage() {
                         >
                             이메일로 시작하기 (회원가입)
                         </Button>
+
+                        <Button
+                            variant="outline"
+                            onClick={() => router.push('/dashboard')}
+                            disabled={loading}
+                            className="w-full h-12 border-2 border-slate-200 text-slate-600 hover:bg-slate-100 rounded-2xl font-bold transition-all mt-3"
+                        >
+                            대시보드 둘러보기
+                        </Button>
                     </CardContent>
                     <CardFooter className="bg-slate-50/50 px-8 py-6 border-t border-slate-100 flex justify-center">
                         <p className="text-xs text-slate-400 text-center leading-relaxed">

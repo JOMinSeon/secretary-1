@@ -24,6 +24,19 @@ import { createReceiptService, type ReceiptData } from "@/lib/supabase/receipt-s
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
+const GUEST_STATS = {
+    totalExpense: 1250000,
+    vatRefund: 113636,
+    receiptCount: 8,
+    lastUpdate: "데모 데이터"
+};
+
+const GUEST_RECEIPTS: ReceiptData[] = [
+    { id: "demo-1", merchant_name: "스타벅스 강남점", total_amount: 15000, vat_amount: 1364, receipt_date: "2026-03-08T10:30:00", category: "식비", image_url: null } as ReceiptData,
+    { id: "demo-2", merchant_name: "GS25 편의점", total_amount: 8500, vat_amount: 773, receipt_date: "2026-03-07T14:20:00", category: "소모품", image_url: null } as ReceiptData,
+    { id: "demo-3", merchant_name: "교보문고", total_amount: 32000, vat_amount: 2909, receipt_date: "2026-03-06T16:00:00", category: "도서", image_url: null } as ReceiptData,
+];
+
 export default function Dashboard() {
     const { plan, setUsageCount } = usePlanStore();
     const [stats, setStats] = useState({
@@ -35,6 +48,7 @@ export default function Dashboard() {
     const [recentReceipts, setRecentReceipts] = useState<ReceiptData[]>([]);
     const [loading, setLoading] = useState(true);
     const [userName, setUserName] = useState("사장님");
+    const [isGuest, setIsGuest] = useState(false);
 
     const router = useRouter();
 
@@ -47,7 +61,12 @@ export default function Dashboard() {
                 // 1. 세션 확인
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) {
-                    router.push('/login');
+                    // 비로그인 사용자: 데모 모드로 대시보드 표시
+                    setIsGuest(true);
+                    setStats(GUEST_STATS);
+                    setRecentReceipts(GUEST_RECEIPTS);
+                    setUsageCount(GUEST_STATS.receiptCount);
+                    setLoading(false);
                     return;
                 }
                 setUserName(user.email?.split('@')[0] || "사장님");
@@ -92,6 +111,23 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8 pb-12">
+            {isGuest && (
+                <div className="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-100 rounded-2xl px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse shrink-0" />
+                        <p className="text-sm font-semibold text-indigo-700">
+                            지금은 데모 모드로 보고 있어요. 실제 데이터를 사용하려면 로그인 또는 회원가입이 필요합니다.
+                        </p>
+                    </div>
+                    <Button
+                        size="sm"
+                        onClick={() => router.push('/login')}
+                        className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold"
+                    >
+                        로그인하기
+                    </Button>
+                </div>
+            )}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
