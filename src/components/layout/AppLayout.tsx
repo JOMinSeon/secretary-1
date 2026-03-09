@@ -19,11 +19,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SubscriptionSync />
             <AppSidebar />
             <SidebarInset className="flex flex-col bg-slate-50/50">
-                <header className="h-16 border-b bg-white/80 backdrop-blur-md flex items-center px-6 sticky top-0 z-10">
-                    <SidebarTrigger />
+                <header className="h-16 border-b border-slate-200 bg-white flex items-center px-6 sticky top-0 z-50 shadow-sm">
+                    <SidebarTrigger className="text-slate-500 hover:text-slate-900 hover:bg-slate-100" />
                     <div className="ml-4 h-4 w-px bg-slate-200" />
                     <div className="ml-4">
-                        <h1 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                        <h1 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                             {pathname.includes('/settings') ? '설정' :
                                 pathname.includes('/pricing') ? '요금제' :
                                     pathname.includes('/receipts') ? '영수증 관리' : '대시보드'}

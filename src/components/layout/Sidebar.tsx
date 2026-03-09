@@ -104,14 +104,14 @@ export function AppSidebar() {
                                 asChild
                                 tooltip={item.label}
                                 className={`flex items-center gap-3 py-6 rounded-xl transition-all duration-200 border ${pathname === item.href
-                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-900/20'
-                                    : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-white'
+                                    ? 'bg-indigo-600 !text-white border-indigo-500 shadow-md shadow-indigo-900/20'
+                                    : 'text-slate-300 border-transparent hover:bg-slate-800 hover:text-white'
                                     }`}
                                 isActive={pathname === item.href}
                             >
                                 <Link href={item.href}>
-                                    <item.icon className={`w-5 h-5 ${pathname === item.href ? 'text-white' : 'text-slate-400'}`} />
-                                    <span className="font-bold group-data-[collapsible=icon]:hidden">{item.label}</span>
+                                    <item.icon className={`w-5 h-5 ${pathname === item.href ? '!text-white' : 'text-slate-300'}`} />
+                                    <span className="font-bold text-inherit group-data-[collapsible=icon]:hidden">{item.label}</span>
                                     {item.premium && !displayIsPremium && (
                                         <Lock className="w-3.5 h-3.5 ml-auto opacity-40 group-data-[collapsible=icon]:hidden" />
                                     )}
