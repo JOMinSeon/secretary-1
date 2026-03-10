@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // API 라우트와 Server Actions은 미들웨어 인증 체크에서 제외
@@ -51,12 +51,32 @@ export async function middleware(request: NextRequest) {
         redirectUrl = new URL('/dashboard', request.url);
     }
 
-    // B. 비로그인 사용자가 보호된 라우트 접근 시 로그인 페이지로 리다이렉트
-    const protectedRoutes = ['/dashboard', '/reports', '/settings', '/checkout', '/receipts', '/expenses', '/test-ai', '/admin'];
+    // B. 보호된 라우트 및 관리자 페이지 접근 제어
+    const protectedRoutes = ['/dashboard', '/reports', '/settings', '/checkout', '/receipts', '/expenses', '/test-ai'];
+    
+    // 1. 일반 보호된 기능 접근 체크 (비로그인 사용자)
     if (!user && protectedRoutes.some(path => pathname.startsWith(path))) {
         redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = '/login';
         redirectUrl.searchParams.set('return_to', pathname);
+    }
+    
+    // 2. 관리자 페이지(/admin) 전용 접근 제어
+    if (pathname.startsWith('/admin')) {
+        if (!user) {
+            redirectUrl = request.nextUrl.clone();
+            redirectUrl.pathname = '/login';
+            redirectUrl.searchParams.set('return_to', pathname);
+        } else {
+            // 여기에 실제 관리자를 구분하는 조건(예: 특정 이메일, role 메타데이터 등)을 지정합니다.
+            // 임시로 ADMIN_EMAIL 환경 변수나 특정 이메일을 사용해 관리자를 판별합니다.
+            const isAdmin = user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || user.email === 'admin@axai.co.kr';
+            
+            if (!isAdmin) {
+                // 관리자가 아닌 사용자가 접근할 경우 대시보드로 강제 이동
+                redirectUrl = new URL('/dashboard', request.url);
+            }
+        }
     }
 
     // C. 유료 기능 접근 제어 (기존 로직 유지)
