@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // API 라우트와 Server Actions은 미들웨어 인증 체크에서 제외
@@ -52,14 +52,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // B. 비로그인 사용자가 보호된 라우트 접근 시 로그인 페이지로 리다이렉트
-    /*
-    const protectedRoutes = ['/dashboard', '/reports', '/settings', '/checkout', '/receipts'];
+    const protectedRoutes = ['/dashboard', '/reports', '/settings', '/checkout', '/receipts', '/expenses', '/test-ai', '/admin'];
     if (!user && protectedRoutes.some(path => pathname.startsWith(path))) {
         redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = '/login';
         redirectUrl.searchParams.set('return_to', pathname);
     }
-    */
 
     // C. 유료 기능 접근 제어 (기존 로직 유지)
     if (!redirectUrl && pathname.startsWith('/reports')) {
