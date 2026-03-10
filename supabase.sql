@@ -47,6 +47,12 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('receipts', 'receipts', true) 
 ON CONFLICT (id) DO UPDATE SET public = true;
 
+-- 버킷에 대해 강제 RLS(Row Level Security) 속성 부여
+UPDATE storage.buckets
+SET file_size_limit = 5242880, -- 5MB 제한 (예시)
+    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp']
+WHERE id = 'receipts';
+
 
 -- ==========================================
 -- 3. Storage 버킷 권한(RLS) 정책 설정

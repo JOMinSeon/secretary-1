@@ -33,7 +33,14 @@ export default function LoginPage() {
             setError(error.message)
             setLoading(false)
         } else {
-            router.push('/dashboard')
+            const params = new URLSearchParams(window.location.search)
+            const returnTo = params.get('return_to')
+            
+            if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+                router.push(returnTo)
+            } else {
+                router.push('/dashboard')
+            }
         }
     }
 
