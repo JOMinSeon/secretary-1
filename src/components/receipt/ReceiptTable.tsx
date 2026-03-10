@@ -117,18 +117,22 @@ export function ReceiptTable() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("정말 이 영수증을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+        // [UX] 삭제 전 명확한 사용자 확인 (실수 방지)
+        const isConfirmed = window.confirm("정말 이 매입 내역을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.");
+        if (!isConfirmed) return;
 
         setIsDeleting(id);
         try {
             const result = await deleteReceiptAction(id);
             if (result.success) {
+                // [UX] 즉각적인 피드백을 위해 데이터 재호출
                 await fetchData();
             } else {
-                alert("삭제 실패: " + result.error);
+                throw new Error(result.error);
             }
         } catch (error) {
-            alert("오류가 발생했습니다.");
+            const message = error instanceof Error ? error.message : "삭제 중 오류가 발생했습니다.";
+            alert(`삭제 실패: ${message}`);
         } finally {
             setIsDeleting(null);
         }
@@ -213,18 +217,30 @@ export function ReceiptTable() {
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                <DropdownMenuLabel>작업</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEdit(receipt)} className="cursor-pointer gap-2">
-                                    <Edit size={14} /> 수정하기
+                            <DropdownMenuContent align="end" className="w-48 rounded-2xl p-2 border-slate-100 shadow-2xl bg-white/95 backdrop-blur-sm">
+                                <DropdownMenuLabel className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 py-2.5">
+                                    작업
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-slate-100/50" />
+                                <DropdownMenuItem onClick={() => handleEdit(receipt)} className="cursor-pointer gap-3 px-3 py-3 rounded-xl transition-all focus:bg-slate-50 focus:text-slate-900">
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+                                        <Edit size={14} />
+                                    </div>
+                                    <span className="font-semibold text-slate-700">수정하기</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem
+                                    variant="destructive"
                                     onClick={() => receipt.id && handleDelete(receipt.id)}
-                                    className="text-red-600 focus:text-red-600 cursor-pointer gap-2"
+                                    className="cursor-pointer gap-3 px-3 py-3 rounded-xl transition-all mt-1 focus:bg-red-50 focus:text-red-600"
                                 >
-                                    {isDeleting === receipt.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                                    삭제하기
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                                        {isDeleting === receipt.id ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            <Trash2 size={14} />
+                                        )}
+                                    </div>
+                                    <span className="font-semibold">삭제하기</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
