@@ -52,7 +52,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // B. 보호된 라우트 및 관리자 페이지 접근 제어
-    const protectedRoutes = ['/dashboard', '/reports', '/settings', '/checkout', '/receipts', '/expenses', '/test-ai'];
+    const protectedRoutes = ['/reports', '/settings', '/checkout', '/receipts', '/expenses', '/test-ai'];
     
     // 1. 일반 보호된 기능 접근 체크 (비로그인 사용자)
     if (!user && protectedRoutes.some(path => pathname.startsWith(path))) {

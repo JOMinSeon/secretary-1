@@ -33,8 +33,7 @@ export default function LoginPage() {
             setError(error.message)
             setLoading(false)
         } else {
-            window.location.href = '/dashboard'
-
+            router.push('/dashboard')
         }
     }
 
@@ -88,7 +87,7 @@ export default function LoginPage() {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center ml-1">
                                     <Label htmlFor="password" className="text-sm font-bold text-slate-600">비밀번호</Label>
-                                    <button type="button" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">비밀번호를 잊으셨나요?</button>
+                                    <Link href="/forgot-password" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">비밀번호를 잊으셨나요?</Link>
                                 </div>
                                 <div className="relative">
                                     <Input
@@ -142,12 +141,12 @@ export default function LoginPage() {
                         </Button>
 
                         <Button
+                            asChild
                             variant="outline"
-                            onClick={() => router.push('/dashboard')}
                             disabled={loading}
                             className="w-full h-12 border-2 border-slate-200 text-slate-600 hover:bg-slate-100 rounded-2xl font-bold transition-all mt-3"
                         >
-                            대시보드 둘러보기
+                            <Link href="/dashboard">대시보드 둘러보기</Link>
                         </Button>
                     </CardContent>
                     <CardFooter className="bg-slate-50/50 px-8 py-6 border-t border-slate-100 flex justify-center">
