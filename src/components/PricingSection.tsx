@@ -112,7 +112,7 @@ export function PricingSection({
                                 </CardContent>
                                 <CardFooter>
                                     <Button
-                                        className={`w-full h-14 rounded-2xl text-lg font-bold transition-all hover:scale-[1.02] ${plan.name === currentPlan ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-default' : plan.popular ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100' : 'bg-slate-900 hover:bg-slate-800'}`}
+                                        className={`w-full h-14 rounded-2xl text-lg font-bold transition-all hover:scale-[1.02] ${plan.name === currentPlan ? 'bg-slate-100 text-slate-400 hover:bg-slate-100 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100'}`}
                                         variant={plan.buttonVariant}
                                         onClick={() => plan.name !== currentPlan && handleSelectPlan(plan.name)}
                                     >
